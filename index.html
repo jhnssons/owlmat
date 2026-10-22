@@ -26,7 +26,7 @@ p{margin:6px 0;color:var(--muted);line-height:1.4}
 .hop{animation:hop .5s}@keyframes hop{40%{transform:translateY(-14px) rotate(-4deg)}}
 .shake{animation:sh .45s}@keyframes sh{25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
 .levels{list-style:none;margin:14px 0 18px;padding:0;display:grid;gap:6px;text-align:left}
-.levels li{display:grid;grid-template-columns:4.6rem 1fr auto;gap:8px;align-items:center;background:var(--track);border-radius:12px;padding:8px 12px;font-size:.92rem}
+.levels button{display:grid;width:100%;grid-template-columns:4.6rem 1fr auto;gap:8px;align-items:center;background:var(--track);border:2px solid transparent;border-radius:12px;padding:10px 12px;font:inherit;font-size:.92rem;color:var(--ink);text-align:left;cursor:pointer}.levels button:hover,.levels button:active{border-color:var(--btn)}
 .levels b{color:var(--head)}.levels em{font-style:normal;color:var(--muted);font-size:.85rem}
 .btn{display:block;width:100%;border:0;border-radius:16px;padding:14px 20px;font:inherit;font-weight:600;font-size:1.1rem;color:#fff;background:linear-gradient(180deg,var(--btn),var(--btn2));box-shadow:0 5px 0 rgba(0,0,0,.28);cursor:pointer}
 .btn:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(0,0,0,.28)}
@@ -59,9 +59,9 @@ p{margin:6px 0;color:var(--muted);line-height:1.4}
 <section id="intro" class="card">
   <div class="slot big"></div>
   <h1>Coruja da Matemática</h1>
-  <p>Resolva cada conta antes de o cronômetro zerar. Acerte 70% para subir de nível.</p>
+  <p>Comece do nível 1 e suba acertando 70% das contas, ou toque em qualquer nível para jogar direto nele.</p>
   <ul class="levels" id="lvlist"></ul>
-  <button class="btn" id="start">Começar</button>
+  <button class="btn" id="start">Começar do nível 1</button>
 </section>
 
 <section id="game" class="card hidden">
@@ -81,7 +81,8 @@ p{margin:6px 0;color:var(--muted);line-height:1.4}
   <p id="rv"></p>
   <p id="rm"></p>
   <button class="btn" id="nx"></button>
-  <button class="btn ghost" id="home">Voltar ao início</button>
+  <button class="btn ghost" id="keep"></button>
+  <button class="btn ghost" id="home">Escolher outro nível</button>
 </section>
 </main>
 
@@ -112,7 +113,8 @@ const LV=[
  {n:10,t:60,d:'Parênteses e equações',m:'Parênteses e equações simples!'},
  {n:10,t:90,d:'Equações de dois passos',m:'Equações mais difíceis, vamos nessa!'},
  {n:10,t:120,d:'Desafio final',m:'Nível máximo! Concentração total!'}];
-$('lvlist').innerHTML=LV.map((c,k)=>`<li><b>Nível ${k+1}</b><span>${c.d}</span><em>${c.n} contas, ${c.t} s</em></li>`).join('');
+$('lvlist').innerHTML=LV.map((c,k)=>`<li><button data-l="${k}"><b>Nível ${k+1}</b><span>${c.d}</span><em>${c.n} contas, ${c.t} s</em></button></li>`).join('');
+$('lvlist').onclick=e=>{const b=e.target.closest('button');if(b)startLevel(+b.dataset.l)};
 
 function gen(l){let a,b,c,d,e,x,o;
  if(l==0){o=R(0,3);
@@ -180,12 +182,13 @@ function finish(){
  $('st').textContent='⭐'.repeat(r>=.9?3:r>=.7?2:r>=.4?1:0)||'📚';
  $('rs').textContent=`${ok} de ${n} acertos`;
  $('rv').textContent=`Tempo médio: ${(ts.reduce((s,x)=>s+x,0)/ts.length/1000).toFixed(1).replace('.',',')} s por conta (limite de ${LV[lv].t} s)`;
- $('rm').textContent=pass?(last?'Você completou os 5 níveis. Que mestre da matemática!':`Próximo: nível ${lv+2}, com ${LV[lv+1].n} contas de ${LV[lv+1].t} segundos cada.`):'Você precisa de 70% de acertos para avançar. Vamos tentar de novo?';
- $('nx').textContent=pass?(last?'Jogar de novo':`Ir para o nível ${lv+2}`):'Tentar de novo';
- again=pass?(last?()=>startLevel(0):()=>startLevel(lv+1)):()=>startLevel(lv);
+ $('rm').textContent=pass?(last?'Você completou os 5 níveis. Que mestre da matemática!':`Próximo: nível ${lv+2}, com ${LV[lv+1].n} contas de ${LV[lv+1].t} segundos cada. Ou fique neste nível e treine mais.`):'Você precisa de 70% de acertos para avançar. Vamos tentar de novo?';
+ $('nx').classList.toggle('hidden',!pass||last);$('nx').textContent=`Ir para o nível ${lv+2}`;$('keep').textContent=pass?`Manter o nível ${lv+1}`:'Tentar de novo';$('keep').classList.toggle('ghost',pass&&!last);
+ 
  const o=document.querySelector('#res .owl');o.classList.remove('hop');void o.offsetWidth;if(pass)o.classList.add('hop')}
 $('start').onclick=()=>startLevel(0);
-$('nx').onclick=()=>again();
+$('nx').onclick=()=>startLevel(lv+1);
+$('keep').onclick=()=>startLevel(lv);
 $('home').onclick=()=>show('intro');
 $('quit').onclick=()=>{clearInterval(iv);locked=true;show('intro')};
 $('go').onclick=submit;
