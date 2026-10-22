@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Coruja da Matemática</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap">
+<style>
+:root{--bg:#bfe0ff;--grid:rgba(21,101,192,.14);--card:#fff;--ink:#0d2a5c;--muted:#4a6b9d;--head:#0d47a1;--btn:#1565c0;--btn2:#0d47a1;--ok:#1b8f4e;--bad:#d1403a;--track:#d6e8fc;--line:#b5d4f6;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0a1b3d;--grid:rgba(120,170,255,.12);--card:#122650;--ink:#e8f1ff;--muted:#9fbbe8;--head:#9cc7ff;--btn:#2f6fd6;--btn2:#1f55b0;--ok:#4cd48a;--bad:#ff7b72;--track:#23407c;--line:#2d4d8e}}
+:root[data-theme="dark"]{--bg:#0a1b3d;--grid:rgba(120,170,255,.12);--card:#122650;--ink:#e8f1ff;--muted:#9fbbe8;--head:#9cc7ff;--btn:#2f6fd6;--btn2:#1f55b0;--ok:#4cd48a;--bad:#ff7b72;--track:#23407c;--line:#2d4d8e}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100%;display:flex;justify-content:center;padding:18px 14px 28px;font-family:"Fredoka","Trebuchet MS",system-ui,sans-serif;color:var(--ink);background-color:var(--bg);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:28px 28px}
+main{width:100%;max-width:440px}
+.card{background:var(--card);border:3px solid var(--line);border-radius:26px;padding:20px 18px;text-align:center;box-shadow:0 8px 0 var(--line)}
+.hidden{display:none}
+h1,h2{margin:6px 0 4px;color:var(--head);font-weight:700;line-height:1.1}
+h1{font-size:2rem}h2{font-size:1.6rem}
+p{margin:6px 0;color:var(--muted);line-height:1.4}
+.slot{width:78px;flex:none}.slot.big{width:150px;margin:0 auto}
+.owl{display:block;width:100%;height:auto;overflow:visible}
+.lid{transform-box:fill-box;transform-origin:top;transform:scaleY(0);animation:bl 4.5s infinite}
+@keyframes bl{0%,94%,100%{transform:scaleY(0)}97%{transform:scaleY(1)}}
+.hop{animation:hop .5s}@keyframes hop{40%{transform:translateY(-14px) rotate(-4deg)}}
+.shake{animation:sh .45s}@keyframes sh{25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+.levels{list-style:none;margin:14px 0 18px;padding:0;display:grid;gap:6px;text-align:left}
+.levels li{display:grid;grid-template-columns:4.6rem 1fr auto;gap:8px;align-items:center;background:var(--track);border-radius:12px;padding:8px 12px;font-size:.92rem}
+.levels b{color:var(--head)}.levels em{font-style:normal;color:var(--muted);font-size:.85rem}
+.btn{display:block;width:100%;border:0;border-radius:16px;padding:14px 20px;font:inherit;font-weight:600;font-size:1.1rem;color:#fff;background:linear-gradient(180deg,var(--btn),var(--btn2));box-shadow:0 5px 0 rgba(0,0,0,.28);cursor:pointer}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(0,0,0,.28)}
+.btn.ghost{margin-top:12px;background:none;color:var(--head);border:2px solid var(--line);box-shadow:none}
+:is(.btn,input,button):focus-visible{outline:3px solid #ffb300;outline-offset:2px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.95rem;color:var(--muted)}
+.chip{background:var(--btn);color:#fff;border-radius:99px;padding:3px 14px;font-weight:600}
+.quit{background:none;border:0;font:inherit;color:var(--muted);cursor:pointer;text-decoration:underline;padding:4px}
+.owlrow{display:flex;align-items:center;gap:12px;margin:12px 0;text-align:left}
+.bubble{flex:1;position:relative;background:var(--track);border-radius:16px;padding:10px 14px;font-weight:500;min-height:3.2rem;display:flex;align-items:center}
+.bubble::before{content:"";position:absolute;left:-9px;top:50%;margin-top:-9px;border:9px solid transparent;border-left:0;border-right-color:var(--track)}
+.timer{display:flex;align-items:center;gap:10px;margin:6px 0}
+.track{flex:1;height:14px;background:var(--track);border-radius:9px;overflow:hidden}
+#fill{height:100%;width:100%;border-radius:9px;background:linear-gradient(90deg,#42a5f5,#1e88e5)}
+#tm{min-width:2.6ch;font-size:1.7rem;font-weight:600;color:var(--head);font-variant-numeric:tabular-nums}
+.low #fill{background:linear-gradient(90deg,#ffa726,var(--bad))}.low #tm{color:var(--bad)}
+#hint{margin:10px 0 0}
+#q{font-size:clamp(2.1rem,10.5vw,3rem);font-weight:700;margin:4px 0 16px;min-height:1.3em;color:var(--ink)}
+#q.good{color:var(--ok)}#q.bad{color:var(--bad)}
+.ans{display:flex;gap:8px}
+.ans input{flex:1;min-width:0;border:3px solid var(--line);border-radius:14px;padding:10px;font:inherit;font-size:1.6rem;text-align:center;color:var(--ink);background:var(--card)}
+.ans .btn{width:auto}
+.big-num{font-size:2.4rem;font-weight:700;color:var(--ink);margin:4px 0}
+#st{font-size:2rem;min-height:2.4rem}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<main>
+<section id="intro" class="card">
+  <div class="slot big"></div>
+  <h1>Coruja da Matemática</h1>
+  <p>Resolva cada conta antes de o cronômetro zerar. Acerte 70% para subir de nível.</p>
+  <ul class="levels" id="lvlist"></ul>
+  <button class="btn" id="start">Começar</button>
+</section>
+
+<section id="game" class="card hidden">
+  <div class="top"><span class="chip" id="lv"></span><span id="cnt"></span><span id="sc"></span><button class="quit" id="quit">Sair</button></div>
+  <div class="owlrow"><div class="slot"></div><div class="bubble" id="say"></div></div>
+  <div class="timer" id="timer"><div class="track"><div id="fill"></div></div><b id="tm">30</b></div>
+  <p id="hint"></p>
+  <div id="q"></div>
+  <div class="ans"><input id="ans" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" enterkeyhint="done" aria-label="Sua resposta" placeholder="?"><button class="btn" id="go">Responder</button></div>
+</section>
+
+<section id="res" class="card hidden">
+  <div class="slot big"></div>
+  <h2 id="rt"></h2>
+  <div id="st"></div>
+  <div class="big-num" id="rs"></div>
+  <p id="rm"></p>
+  <button class="btn" id="nx"></button>
+  <button class="btn ghost" id="home">Voltar ao início</button>
+</section>
+</main>
+
+<script>
+const OWL=`<svg class="owl" viewBox="0 0 120 134" aria-hidden="true">
+<ellipse cx="22" cy="88" rx="10" ry="25" fill="#6d4c41" transform="rotate(12 22 88)"/>
+<ellipse cx="98" cy="88" rx="10" ry="25" fill="#6d4c41" transform="rotate(-12 98 88)"/>
+<path d="M44 118l-5 9M44 118v10M44 118l5 9M76 118l-5 9M76 118v10M76 118l5 9" stroke="#ffb300" stroke-width="4" stroke-linecap="round" fill="none"/>
+<ellipse cx="60" cy="82" rx="38" ry="40" fill="#8d6e63"/>
+<ellipse cx="60" cy="92" rx="24" ry="26" fill="#f5e6d3"/>
+<path d="M48 84q4 4 8 0M62 84q4 4 8 0M54 96q4 4 8 0M42 98q4 4 8 0M66 98q4 4 8 0" stroke="#c9a98f" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+<path d="M25 52L20 22L47 38Z" fill="#6d4c41"/><path d="M95 52L100 22L73 38Z" fill="#6d4c41"/>
+<ellipse cx="60" cy="54" rx="37" ry="31" fill="#8d6e63"/>
+<circle cx="43" cy="54" r="16" fill="#fff"/><circle cx="77" cy="54" r="16" fill="#fff"/>
+<circle cx="45" cy="55" r="8" fill="#0d2a5c"/><circle cx="75" cy="55" r="8" fill="#0d2a5c"/>
+<circle cx="48" cy="52" r="2.8" fill="#fff"/><circle cx="78" cy="52" r="2.8" fill="#fff"/>
+<rect class="lid" x="27" y="38" width="32" height="32" fill="#8d6e63"/><rect class="lid" x="61" y="38" width="32" height="32" fill="#8d6e63"/>
+<path d="M53 62h14l-7 13z" fill="#ffb300"/>
+<polygon points="60,10 99,25 60,39 21,25" fill="#1a3a8f"/><path d="M42 33v9q18 8 36 0v-9" fill="#274db3"/>
+<path d="M95 27v14" stroke="#ffb300" stroke-width="3"/><circle cx="95" cy="43" r="3.5" fill="#ffb300"/>
+</svg>`;
+document.querySelectorAll('.slot').forEach(s=>s.innerHTML=OWL);
+const $=id=>document.getElementById(id);
+const R=(a,b)=>Math.floor(Math.random()*(b-a+1))+a,P=a=>a[R(0,a.length-1)];
+const LV=[
+ {n:20,t:30,d:'Contas básicas',m:'Vamos aquecer com contas básicas!'},
+ {n:10,t:45,d:'Números maiores',m:'Agora os números ficam maiores!'},
+ {n:10,t:60,d:'Parênteses e equações',m:'Parênteses e equações simples!'},
+ {n:10,t:90,d:'Equações de dois passos',m:'Equações mais difíceis, vamos nessa!'},
+ {n:10,t:120,d:'Desafio final',m:'Nível máximo! Concentração total!'}];
+$('lvlist').innerHTML=LV.map((c,k)=>`<li><b>Nível ${k+1}</b><span>${c.d}</span><em>${c.n} contas, ${c.t} s</em></li>`).join('');
+
+function gen(l){let a,b,c,d,e,x,o;
+ if(l==0){o=R(0,3);
+  if(o==0){a=R(1,20);b=R(1,20);return[`${a} + ${b}`,a+b]}
+  if(o==1){a=R(5,30);b=R(1,a-1);return[`${a} − ${b}`,a-b]}
+  if(o==2){a=R(2,10);b=R(2,10);return[`${a} × ${b}`,a*b]}
+  b=R(2,10);c=R(2,10);return[`${b*c} ÷ ${b}`,c]}
+ if(l==1){o=R(0,4);
+  if(o==0){a=R(20,99);b=R(20,99);return[`${a} + ${b}`,a+b]}
+  if(o==1){a=R(40,150);b=R(10,a-10);return[`${a} − ${b}`,a-b]}
+  if(o==2){a=R(11,19);b=R(3,9);return[`${a} × ${b}`,a*b]}
+  if(o==3){b=R(3,12);c=R(6,15);return[`${b*c} ÷ ${b}`,c]}
+  a=R(2,30);b=R(2,9);c=R(2,9);return[`${a} + ${b} × ${c}`,a+b*c]}
+ if(l==2){o=R(0,3);
+  if(o==0){a=R(2,15);b=R(2,15);c=R(2,9);return[`(${a} + ${b}) × ${c}`,(a+b)*c]}
+  if(o==1){a=R(6,12);b=R(6,12);c=R(2,5);d=R(2,5);return[`${a} × ${b} − ${c} × ${d}`,a*b-c*d]}
+  x=R(2,20);a=R(2,9);b=R(3,40);o=R(0,3);
+  if(o==0)return[`x + ${b} = ${x+b}`,x,1];
+  if(o==1)return[`x − ${b} = ${x}`,x+b,1];
+  if(o==2)return[`${a}x = ${a*x}`,x,1];
+  return[`x ÷ ${a} = ${x}`,a*x,1]}
+ if(l==3){o=R(0,4);
+  if(o==0||o==4){x=R(3,15);a=R(2,9);b=R(1,30);
+   return R(0,1)?[`${a}x + ${b} = ${a*x+b}`,x,1]:[`${a}x − ${b} = ${a*x-b}`,x,1]}
+  if(o==1){a=R(2,12);b=R(2,12);c=R(5,15);d=R(1,c-1);return[`(${a} + ${b}) × (${c} − ${d})`,(a+b)*(c-d)]}
+  if(o==2){a=R(6,15);b=R(5,50);return[`${a}² + ${b}`,a*a+b]}
+  b=R(3,9);c=R(3,12);d=R(3,9);e=R(3,9);return[`${b*c} ÷ ${b} + ${d} × ${e}`,c+d*e]}
+ o=R(0,5);
+ if(o==0){x=R(2,12);a=R(2,9);b=R(1,10);return[`${a}(x + ${b}) = ${a*(x+b)}`,x,1]}
+ if(o==1){x=R(2,12);a=R(5,9);c=R(2,a-1);b=R(1,30);return[`${a}x + ${b} = ${c}x + ${(a-c)*x+b}`,x,1]}
+ if(o==2){a=R(6,15);b=R(2,9);c=R(2,30);return[`√${a*a} × ${b} + ${c}`,a*b+c]}
+ if(o==3){a=R(3,7);b=R(3,7);c=R(5,30);return[`(${a} + ${b})² − ${c}`,(a+b)**2-c]}
+ if(o==4){a=P([10,20,25,50,75]);b=R(2,30)*20;return[`${a}% de ${b}`,a*b/100]}
+ a=R(12,25);b=R(11,19);return[`${a} × ${b}`,a*b]}
+
+let lv=0,qs=[],i=0,ok=0,locked=true,iv=0,end=0,again=()=>{};
+const show=id=>['intro','game','res'].forEach(s=>$(s).classList.toggle('hidden',s!=id));
+const say=t=>$('say').textContent=t;
+function mood(c){const o=document.querySelector('#game .owl');o.classList.remove('hop','shake');void o.offsetWidth;if(c)o.classList.add(c)}
+function startLevel(l){lv=l;qs=Array.from({length:LV[l].n},()=>gen(l));i=0;ok=0;show('game');say(LV[l].m);next()}
+function next(){
+ if(i>=qs.length)return finish();
+ const[t,a,e]=qs[i],T=LV[lv].t*1000;
+ $('lv').textContent='Nível '+(lv+1);$('cnt').textContent=`Conta ${i+1} de ${qs.length}`;$('sc').textContent='✓ '+ok;
+ $('q').textContent=e?t:t+' = ?';$('q').className='';
+ $('hint').textContent=e?'Descubra o valor de x':'Quanto dá?';
+ $('ans').value='';$('ans').focus();locked=false;mood('');
+ end=Date.now()+T;clearInterval(iv);
+ const tick=()=>{const r=end-Date.now();
+  if(r<=0){clearInterval(iv);$('tm').textContent=0;$('fill').style.width='0%';return answer(null)}
+  $('tm').textContent=Math.ceil(r/1000);$('fill').style.width=r/T*100+'%';$('timer').classList.toggle('low',r<=10000)};
+ tick();iv=setInterval(tick,100)}
+function answer(v){
+ if(locked)return;locked=true;clearInterval(iv);
+ const a=qs[i][1],good=v===a;
+ if(good){ok++;$('sc').textContent='✓ '+ok;say(P(['Isso mesmo!','Excelente!','Acertou em cheio!','Brilhante!','Show de bola!']));mood('hop')}
+ else{say((v===null?'Tempo esgotado! ':'Quase! ')+'A resposta era '+a+'.');mood('shake')}
+ $('q').className=good?'good':'bad';
+ setTimeout(()=>{i++;next()},good?900:2000)}
+function submit(){const v=$('ans').value;if(v!=='')answer(+v)}
+function finish(){
+ const n=qs.length,r=ok/n,pass=r>=.7,last=lv==LV.length-1;
+ show('res');
+ $('rt').textContent=pass?(last?'Parabéns, você zerou!':`Nível ${lv+1} concluído!`):'Quase lá!';
+ $('st').textContent='⭐'.repeat(r>=.9?3:r>=.7?2:r>=.4?1:0)||'📚';
+ $('rs').textContent=`${ok} de ${n} acertos`;
+ $('rm').textContent=pass?(last?'Você completou os 5 níveis. Que mestre da matemática!':`Próximo: nível ${lv+2}, com ${LV[lv+1].n} contas de ${LV[lv+1].t} segundos cada.`):'Você precisa de 70% de acertos para avançar. Vamos tentar de novo?';
+ $('nx').textContent=pass?(last?'Jogar de novo':`Ir para o nível ${lv+2}`):'Tentar de novo';
+ again=pass?(last?()=>startLevel(0):()=>startLevel(lv+1)):()=>startLevel(lv);
+ const o=document.querySelector('#res .owl');o.classList.remove('hop');void o.offsetWidth;if(pass)o.classList.add('hop')}
+$('start').onclick=()=>startLevel(0);
+$('nx').onclick=()=>again();
+$('home').onclick=()=>show('intro');
+$('quit').onclick=()=>{clearInterval(iv);locked=true;show('intro')};
+$('go').onclick=submit;
+$('ans').addEventListener('keydown',e=>{if(e.key==='Enter')submit()});
+$('ans').addEventListener('input',e=>{e.target.value=e.target.value.replace(/\D/g,'').slice(0,6)});
+</script>
+</body>
+</html>
