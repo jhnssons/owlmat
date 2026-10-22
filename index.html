@@ -49,6 +49,7 @@ p{margin:6px 0;color:var(--muted);line-height:1.4}
 .ans{display:flex;gap:8px}
 .ans input{flex:1;min-width:0;border:3px solid var(--line);border-radius:14px;padding:10px;font:inherit;font-size:1.6rem;text-align:center;color:var(--ink);background:var(--card)}
 .ans .btn{width:auto}
+.sign{flex:none;width:52px;border:3px solid var(--line);border-radius:14px;background:var(--track);color:var(--head);font:inherit;font-size:1.5rem;font-weight:600;cursor:pointer}
 .big-num{font-size:2.4rem;font-weight:700;color:var(--ink);margin:4px 0}
 #st{font-size:2rem;min-height:2.4rem}
 @media (prefers-reduced-motion:reduce){*{animation:none!important}}
@@ -70,7 +71,7 @@ p{margin:6px 0;color:var(--muted);line-height:1.4}
   <div class="timer" id="timer"><div class="track"><div id="fill"></div></div><b id="tm">30</b></div>
   <p id="hint"></p>
   <div id="q"></div>
-  <div class="ans"><input id="ans" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" enterkeyhint="done" aria-label="Sua resposta" placeholder="?"><button class="btn" id="go">Responder</button></div>
+  <div class="ans"><button class="sign" id="sg" type="button" aria-label="Trocar sinal, positivo ou negativo">±</button><input id="ans" type="text" inputmode="numeric" pattern="-?[0-9]*" autocomplete="off" enterkeyhint="done" aria-label="Sua resposta" placeholder="?"><button class="btn" id="go">Responder</button></div>
 </section>
 
 <section id="res" class="card hidden">
@@ -106,10 +107,10 @@ const OWL=`<svg class="owl" viewBox="0 0 120 134" aria-hidden="true">
 </svg>`;
 document.querySelectorAll('.slot').forEach(s=>s.innerHTML=OWL);
 const $=id=>document.getElementById(id);
-const R=(a,b)=>Math.floor(Math.random()*(b-a+1))+a,P=a=>a[R(0,a.length-1)];
+const R=(a,b)=>Math.floor(Math.random()*(b-a+1))+a,P=a=>a[R(0,a.length-1)],N=v=>String(v).replace('-','−');
 const LV=[
  {n:20,t:30,d:'Contas básicas',m:'Vamos aquecer com contas básicas!'},
- {n:10,t:45,d:'Números maiores',m:'Agora os números ficam maiores!'},
+ {n:10,t:45,d:'Maiores e negativos',m:'Agora tem números maiores e negativos!'},
  {n:10,t:60,d:'Parênteses e equações',m:'Parênteses e equações simples!'},
  {n:10,t:90,d:'Equações de dois passos',m:'Equações mais difíceis, vamos nessa!'},
  {n:10,t:120,d:'Desafio final',m:'Nível máximo! Concentração total!'}];
@@ -124,27 +125,27 @@ function gen(l){let a,b,c,d,e,x,o;
   b=R(2,10);c=R(2,10);return[`${b*c} ÷ ${b}`,c]}
  if(l==1){o=R(0,4);
   if(o==0){a=R(20,99);b=R(20,99);return[`${a} + ${b}`,a+b]}
-  if(o==1){a=R(40,150);b=R(10,a-10);return[`${a} − ${b}`,a-b]}
+  if(o==1){a=R(20,99);b=R(20,99);return[`${a} − ${b}`,a-b]}
   if(o==2){a=R(11,19);b=R(3,9);return[`${a} × ${b}`,a*b]}
   if(o==3){b=R(3,12);c=R(6,15);return[`${b*c} ÷ ${b}`,c]}
   a=R(2,30);b=R(2,9);c=R(2,9);return[`${a} + ${b} × ${c}`,a+b*c]}
  if(l==2){o=R(0,3);
   if(o==0){a=R(2,15);b=R(2,15);c=R(2,9);return[`(${a} + ${b}) × ${c}`,(a+b)*c]}
-  if(o==1){a=R(6,12);b=R(6,12);c=R(2,5);d=R(2,5);return[`${a} × ${b} − ${c} × ${d}`,a*b-c*d]}
+  if(o==1){a=R(2,12);b=R(2,12);c=R(2,12);d=R(2,12);return[`${a} × ${b} − ${c} × ${d}`,a*b-c*d]}
   x=R(2,20);a=R(2,9);b=R(3,40);o=R(0,3);
   if(o==0)return[`x + ${b} = ${x+b}`,x,1];
   if(o==1)return[`x − ${b} = ${x}`,x+b,1];
   if(o==2)return[`${a}x = ${a*x}`,x,1];
   return[`x ÷ ${a} = ${x}`,a*x,1]}
  if(l==3){o=R(0,4);
-  if(o==0||o==4){x=R(3,15);a=R(2,9);b=R(1,30);
-   return R(0,1)?[`${a}x + ${b} = ${a*x+b}`,x,1]:[`${a}x − ${b} = ${a*x-b}`,x,1]}
+  if(o==0||o==4){x=R(-9,15);a=R(2,9);b=R(1,30);
+   return R(0,1)?[`${a}x + ${b} = ${N(a*x+b)}`,x,1]:[`${a}x − ${b} = ${N(a*x-b)}`,x,1]}
   if(o==1){a=R(2,12);b=R(2,12);c=R(5,15);d=R(1,c-1);return[`(${a} + ${b}) × (${c} − ${d})`,(a+b)*(c-d)]}
   if(o==2){a=R(6,15);b=R(5,50);return[`${a}² + ${b}`,a*a+b]}
   b=R(3,9);c=R(3,12);d=R(3,9);e=R(3,9);return[`${b*c} ÷ ${b} + ${d} × ${e}`,c+d*e]}
  o=R(0,5);
- if(o==0){x=R(2,12);a=R(2,9);b=R(1,10);return[`${a}(x + ${b}) = ${a*(x+b)}`,x,1]}
- if(o==1){x=R(2,12);a=R(5,9);c=R(2,a-1);b=R(1,30);return[`${a}x + ${b} = ${c}x + ${(a-c)*x+b}`,x,1]}
+ if(o==0){x=R(-8,12);a=R(2,9);b=R(1,10);return[`${a}(x + ${b}) = ${N(a*(x+b))}`,x,1]}
+ if(o==1){x=R(-8,12);a=R(5,9);c=R(2,a-1);b=R(1,30);return[`${a}x + ${b} = ${c}x ${(a-c)*x+b<0?'−':'+'} ${Math.abs((a-c)*x+b)}`,x,1]}
  if(o==2){a=R(6,15);b=R(2,9);c=R(2,30);return[`√${a*a} × ${b} + ${c}`,a*b+c]}
  if(o==3){a=R(3,7);b=R(3,7);c=R(5,30);return[`(${a} + ${b})² − ${c}`,(a+b)**2-c]}
  if(o==4){a=P([10,20,25,50,75]);b=R(2,30)*20;return[`${a}% de ${b}`,a*b/100]}
@@ -171,10 +172,10 @@ function answer(v){
  if(locked)return;locked=true;clearInterval(iv);
  const a=qs[i][1],good=v===a,L=LV[lv].t*1000;ts.push(v===null?L:Math.min(L,Math.max(0,L-(end-Date.now()))));
  if(good){ok++;$('sc').textContent='✓ '+ok;say(P(['Isso mesmo!','Excelente!','Acertou em cheio!','Brilhante!','Show de bola!']));mood('hop')}
- else{say((v===null?'Tempo esgotado! ':'Quase! ')+'A resposta era '+a+'.');mood('shake')}
+ else{say((v===null?'Tempo esgotado! ':'Quase! ')+'A resposta era '+N(a)+'.');mood('shake')}
  $('q').className=good?'good':'bad';
  setTimeout(()=>{i++;next()},good?900:2000)}
-function submit(){const v=$('ans').value;if(v!=='')answer(+v)}
+function submit(){const v=$('ans').value;if(v!==''&&v!=='-')answer(+v)}
 function finish(){
  const n=qs.length,r=ok/n,pass=r>=.7,last=lv==LV.length-1;
  show('res');
@@ -193,7 +194,9 @@ $('home').onclick=()=>show('intro');
 $('quit').onclick=()=>{clearInterval(iv);locked=true;show('intro')};
 $('go').onclick=submit;
 $('ans').addEventListener('keydown',e=>{if(e.key==='Enter')submit()});
-$('ans').addEventListener('input',e=>{e.target.value=e.target.value.replace(/\D/g,'').slice(0,6)});
+$('ans').addEventListener('input',e=>{const s=e.target.value.replace(/[−–]/g,'-').replace(/[^\d-]/g,'');e.target.value=(s.startsWith('-')?'-':'')+s.replace(/-/g,'').slice(0,6)});
+$('sg').addEventListener('pointerdown',e=>e.preventDefault());
+$('sg').onclick=()=>{const a=$('ans');a.value=a.value.startsWith('-')?a.value.slice(1):'-'+a.value;a.focus()};
 </script>
 </body>
 </html>
