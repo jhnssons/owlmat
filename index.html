@@ -78,6 +78,7 @@ p{margin:6px 0;color:var(--muted);line-height:1.4}
   <h2 id="rt"></h2>
   <div id="st"></div>
   <div class="big-num" id="rs"></div>
+  <p id="rv"></p>
   <p id="rm"></p>
   <button class="btn" id="nx"></button>
   <button class="btn ghost" id="home">Voltar ao início</button>
@@ -147,11 +148,11 @@ function gen(l){let a,b,c,d,e,x,o;
  if(o==4){a=P([10,20,25,50,75]);b=R(2,30)*20;return[`${a}% de ${b}`,a*b/100]}
  a=R(12,25);b=R(11,19);return[`${a} × ${b}`,a*b]}
 
-let lv=0,qs=[],i=0,ok=0,locked=true,iv=0,end=0,again=()=>{};
+let lv=0,qs=[],i=0,ok=0,ts=[],locked=true,iv=0,end=0,again=()=>{};
 const show=id=>['intro','game','res'].forEach(s=>$(s).classList.toggle('hidden',s!=id));
 const say=t=>$('say').textContent=t;
 function mood(c){const o=document.querySelector('#game .owl');o.classList.remove('hop','shake');void o.offsetWidth;if(c)o.classList.add(c)}
-function startLevel(l){lv=l;qs=Array.from({length:LV[l].n},()=>gen(l));i=0;ok=0;show('game');say(LV[l].m);next()}
+function startLevel(l){lv=l;qs=Array.from({length:LV[l].n},()=>gen(l));i=0;ok=0;ts=[];show('game');say(LV[l].m);next()}
 function next(){
  if(i>=qs.length)return finish();
  const[t,a,e]=qs[i],T=LV[lv].t*1000;
@@ -166,7 +167,7 @@ function next(){
  tick();iv=setInterval(tick,100)}
 function answer(v){
  if(locked)return;locked=true;clearInterval(iv);
- const a=qs[i][1],good=v===a;
+ const a=qs[i][1],good=v===a,L=LV[lv].t*1000;ts.push(v===null?L:Math.min(L,Math.max(0,L-(end-Date.now()))));
  if(good){ok++;$('sc').textContent='✓ '+ok;say(P(['Isso mesmo!','Excelente!','Acertou em cheio!','Brilhante!','Show de bola!']));mood('hop')}
  else{say((v===null?'Tempo esgotado! ':'Quase! ')+'A resposta era '+a+'.');mood('shake')}
  $('q').className=good?'good':'bad';
@@ -178,6 +179,7 @@ function finish(){
  $('rt').textContent=pass?(last?'Parabéns, você zerou!':`Nível ${lv+1} concluído!`):'Quase lá!';
  $('st').textContent='⭐'.repeat(r>=.9?3:r>=.7?2:r>=.4?1:0)||'📚';
  $('rs').textContent=`${ok} de ${n} acertos`;
+ $('rv').textContent=`Tempo médio: ${(ts.reduce((s,x)=>s+x,0)/ts.length/1000).toFixed(1).replace('.',',')} s por conta (limite de ${LV[lv].t} s)`;
  $('rm').textContent=pass?(last?'Você completou os 5 níveis. Que mestre da matemática!':`Próximo: nível ${lv+2}, com ${LV[lv+1].n} contas de ${LV[lv+1].t} segundos cada.`):'Você precisa de 70% de acertos para avançar. Vamos tentar de novo?';
  $('nx').textContent=pass?(last?'Jogar de novo':`Ir para o nível ${lv+2}`):'Tentar de novo';
  again=pass?(last?()=>startLevel(0):()=>startLevel(lv+1)):()=>startLevel(lv);
