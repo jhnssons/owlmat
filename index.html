@@ -47,7 +47,9 @@ p{margin:6px 0;color:var(--muted);line-height:1.4}
 #q{font-size:clamp(2.1rem,10.5vw,3rem);font-weight:700;margin:4px 0 16px;min-height:1.3em;color:var(--ink)}
 #q.good{color:var(--ok)}#q.bad{color:var(--bad)}
 #q.sm{font-size:1.45rem;line-height:1.3;font-weight:600}
+.plot{max-width:290px;margin:0 auto 12px;border:2px solid var(--line);border-radius:14px;background:var(--card);padding:4px}
 #tp .btn,#tt .btn{margin-top:10px}
+.keys{display:flex;gap:8px;margin-top:8px}.keys button{flex:1;border:2px solid var(--line);border-radius:12px;background:var(--track);color:var(--head);font:inherit;font-size:1.2rem;font-weight:600;padding:8px;cursor:pointer}
 #rc{color:var(--head);font-weight:600}
 .nt{display:flex;align-items:center;justify-content:center;gap:8px;margin:0 0 14px;color:var(--muted);cursor:pointer}.nt input{width:20px;height:20px;accent-color:var(--btn)}
 #tgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}
@@ -79,7 +81,9 @@ p{margin:6px 0;color:var(--muted);line-height:1.4}
   <div class="timer" id="timer"><div class="track"><div id="fill"></div></div><b id="tm">30</b></div>
   <p id="hint"></p>
   <div id="q"></div>
+  <div id="plot" class="plot hidden"></div>
   <div class="ans"><button class="sign" id="sg" type="button" aria-label="Trocar sinal, positivo ou negativo">±</button><input id="ans" type="text" inputmode="numeric" pattern="-?[0-9]*" autocomplete="off" enterkeyhint="done" aria-label="Sua resposta" placeholder="?"><button class="btn" id="go">Responder</button></div>
+  <div class="keys" id="keys"><button type="button" data-k="/" aria-label="Barra de fração">a/b</button><button type="button" data-k="√" aria-label="Raiz quadrada">√</button><button type="button" data-k="^" aria-label="Potência">xⁿ</button></div>
 </section>
 
 <section id="ths" class="card hidden">
@@ -147,7 +151,7 @@ const LV=[
  {n:20,t:30,d:'Contas básicas',m:'Vamos aquecer com contas básicas!'},
  {n:10,t:45,d:'Negativos, frações e MMC',m:'Negativos, frações, MMC e MDC!'},
  {n:10,t:60,d:'Porcentagem e proporção',m:'Porcentagem, equações e regra de três!'},
- {n:10,t:120,ch:1,d:'Juros, 2º grau e estatística',m:'Juros, equações do 2º grau, média, moda e mediana!'},
+ {n:10,t:120,ch:1,d:'Juros, 2º grau, estatística e funções',m:'Juros, equações do 2º grau, média, moda e mediana!'},
  {n:10,t:120,ch:1,d:'Probabilidade e sistemas',m:'Probabilidade, sistemas e juros compostos!'},
  {n:10,t:120,ch:1,d:'Mestre',m:'Nível Mestre! PA, PG, logaritmo e trigonometria!'}];
 const renderList=()=>{const R0=rec();$('lvlist').innerHTML=LV.map((c,k)=>`<li><button data-l="${k}"><b>Nível ${k+1}</b><span>${c.d}${R0[k]?`<br><small>${rtxt(R0[k],c.n)}</small>`:''}</span><em>${c.n} contas, ${c.ch?'120 a 480':c.t} s</em></button></li>`).join('')};renderList();
@@ -156,7 +160,7 @@ $('lvlist').onclick=e=>{const b=e.target.closest('button');if(b)go(+b.dataset.l)
 const br=v=>v.toLocaleString('pt-BR'),sg=v=>v<0?'−':'+',shuf=a=>a.sort(()=>Math.random()-.5),sum=a=>a.reduce((s,x)=>s+x,0),fmt=s=>TL>=60?Math.floor(s/60)+':'+String(s%60).padStart(2,'0'):s;
 function go(l){if(LV[l].ch&&!$('nt').checked){pend=l;$('tpt').textContent=`Nível ${l+1}: tempo por conta`;show('tp')}else startLevel(l)}
 function poly(k,b,c){let s=(k==1?'':k)+'x²';if(b)s+=` ${sg(b)} ${Math.abs(b)==1?'':Math.abs(b)}x`;if(c)s+=` ${sg(c)} ${Math.abs(c)}`;return s+' = 0'}
-function pct(){const o=R(0,3);let p,v;
+function pct(){if(R(0,5)==0){const p=P([5,10,20,25,40,50,75]);return[`${p}% como fração irredutível`,fr(p,100),1,'Escreva a fração (ex: 1/4)',1]}const o=R(0,3);let p,v;
  if(o==0){p=P([10,20,25,50,75]);v=R(2,40)*20;return[`${p}% de ${v}`,p*v/100]}
  if(o==1){p=P([10,20,25,50]);v=R(2,25)*20;return[`Produto de R$ ${v} com ${p}% de desconto`,v-v*p/100,1,'Quanto ele passa a custar, em R$?']}
  if(o==2){p=P([5,10,15,20,25,30]);v=R(5,40)*100;return[`Salário de R$ ${br(v)} com aumento de ${p}%`,v+v*p/100,1,'Qual é o novo valor, em R$?']}
@@ -176,35 +180,63 @@ const isP=n=>{if(n<2)return 0;for(let d=2;d*d<=n;d++)if(n%d==0)return 0;return 1
 function rec(){try{return JSON.parse(localStorage.getItem('coruja')||'{}')}catch(e){return{}}}
 function save(v){try{localStorage.setItem('coruja',JSON.stringify(v))}catch(e){}}
 function rtxt(o,n){return o?`Recorde: ${o.s}/${n} acertos`+(o.t?`, ${o.t.toFixed(1).replace('.',',')} s de média`:''):''}
-function frac(){const o=R(0,2);
+function frac(l){const o=R(0,l>1?4:2);
  if(o==0){const d=P([2,3,4,5,8,10]),u=R(1,d-1),n=d*R(2,12);return[`${u}/${d} de ${n}`,u*n/d]}
- if(o==1){const[p,q]=P(CO),k=R(2,6);return[`Simplifique ${k*p}/${k*q}`,q,1,'Qual é o denominador da fração simplificada?']}
- const d=P([2,3,4,5]),m=R(2,4),a=R(1,d),b=R(1,d*m-1);return[`${a}/${d} + ${b}/${d*m}`,a*m+b,1,`O resultado é ?/${d*m}. Qual é o numerador?`]}
+ if(o==1){const[p,q]=P(CO),k=R(2,6);return[`Simplifique ${k*p}/${k*q}`,fr(p,q),1,'Escreva a fração simplificada (ex: 2/3)',1]}
+ const d=P([2,3,4,5]),m=R(2,4),a=R(1,d),b=R(1,d*m-1),[p,q]=P(CO),[r,s]=P(CO);
+ if(o==2)return[`${a}/${d} + ${b}/${d*m}`,fr(a*m+b,d*m),1,'Escreva o resultado como fração (ex: 3/4)'];
+ if(o==3)return[`${p}/${q} + ${r}/${s}`,fr(p*s+r*q,q*s),1,'Escreva o resultado como fração (ex: 3/4)'];
+ return[`${p}/${q} × ${r}/${s}`,fr(p*r,q*s),1,'Escreva o resultado como fração (ex: 3/4)']}
 function mmc(){const[p,q]=P(CO),g=R(2,6),a=g*p,b=g*q,o=R(0,3);
  if(o==0)return[`MDC de ${a} e ${b}`,g,1,'Qual é o MDC?'];
  if(o==1)return[`MMC de ${a} e ${b}`,g*p*q,1,'Qual é o MMC?'];
  if(o==2){const lo=R(1,30),hi=lo+R(10,20);let c=0;for(let n=lo;n<=hi;n++)c+=isP(n);return[`Números de ${lo} a ${hi}`,c,1,'Quantos são primos?']}
  const m=R(3,9),h=R(5,20)*10;return[`Números de 1 a ${h}`,Math.floor(h/m),1,`Quantos são múltiplos de ${m}?`]}
-function prop(){const o=R(0,2);
+const dv=(t,x)=>P(Array.from({length:30},(_,j)=>j+2).filter(n=>t%n==0&&n!=x));
+function pdir(){const o=R(0,6);
  if(o==0){const a=R(2,6),p=R(2,9),b=R(7,15);return[`${a} canetas custam R$ ${a*p}`,b*p,1,`Quanto custam ${b} canetas, em R$?`]}
- if(o==1){const w=R(2,8);let d,v;do{d=R(4,12)}while(d==w);const t=w*d;do{v=R(2,24)}while(t%v||v==w);return[`${w} operários fazem uma obra em ${d} dias`,t/v,1,`Em quantos dias ${v} operários fazem a mesma obra?`]}
- const[a,b]=P(CO),k=R(2,9);return[`Duas partes na razão ${a}:${b} somam ${(a+b)*k}`,Math.max(a,b)*k,1,'Quanto vale a maior parte?']}
-function geo(){const o=R(0,4),a=R(3,12),b=R(3,12),c=R(2,6),T=P([[3,4,5],[5,12,13],[8,15,17],[6,8,10],[7,24,25],[9,12,15]]);
+ if(o==1){const a=R(2,6),p=R(2,5),b=R(7,15);return[`Uma receita para ${a} pessoas leva ${a*p} ovos`,b*p,1,`Quantos ovos para ${b} pessoas?`]}
+ if(o==2){const k=R(8,14),L=R(3,8);let L2;do{L2=R(10,40)}while(L2==L);return[`Um carro percorre ${k*L} km com ${L} litros de gasolina`,k*L2,1,`Quantos km ele percorre com ${L2} litros?`]}
+ if(o==3){const v=R(5,20),m=R(2,6),n=R(8,30);return[`Uma torneira despeja ${v*m} litros de água em ${m} minutos`,v*n,1,`Quantos litros ela despeja em ${n} minutos?`]}
+ if(o==4){const c=R(2,5),k=R(2,9),n=R(6,15);return[`Num mapa, ${c} cm representam ${c*k} km reais`,k*n,1,`Quantos km reais representam ${n} cm no mapa?`]}
+ if(o==5){const p=R(10,30),m=R(2,5),n=R(6,12);return[`Uma impressora imprime ${p*m} páginas em ${m} minutos`,p*n,1,`Quantas páginas imprime em ${n} minutos?`]}
+ const[a,b]=P(CO),k=R(2,9);return[`Dois sócios investem na razão ${a}:${b} e dividem na mesma razão um lucro de R$ ${(a+b)*k*10}`,Math.max(a,b)*k*10,1,'Quanto recebe quem investiu mais, em R$?']}
+function pinv(){const o=R(0,5);
+ if(o==0){const w=R(2,8);let d;do{d=R(4,12)}while(d==w);const t=w*d,v=dv(t,w);return[`${w} operários fazem uma obra em ${d} dias`,t/v,1,`Em quantos dias ${v} operários fazem a mesma obra?`]}
+ if(o==1){const[v1,v2,u]=P([[60,90,3],[60,40,2],[80,40,1],[90,60,2],[100,50,1],[120,80,2],[30,45,3],[60,30,1],[45,60,4]]),t=u*R(1,3);return[`Um ônibus a ${v1} km/h leva ${t} horas para ir de uma cidade a outra`,v1*t/v2,1,`Quantas horas levaria a ${v2} km/h?`]}
+ if(o==2){const n=R(2,5),m=R(6,20),t=n*m,n2=dv(t,n);return[`${n} torneiras iguais enchem um tanque em ${m} minutos`,t/n2,1,`Em quantos minutos ${n2} torneiras enchem o mesmo tanque?`]}
+ if(o==3){const a=R(4,12);let d;do{d=R(5,15)}while(d==a);const t=a*d,c=dv(t,a);return[`A ração de um canil alimenta ${a} cães por ${d} dias`,t/c,1,`Por quantos dias a mesma ração alimenta ${c} cães?`]}
+ if(o==4){const a=R(3,12);let c;do{c=R(3,12)}while(c==a);const t=a*c,b=dv(t,a);return[`Ao dividir um lote de figurinhas igualmente entre ${a} crianças, cada uma recebe ${c}`,t/b,1,`Quantas figurinhas cada uma recebe se forem ${b} crianças?`]}
+ const[a,b]=P(CO),k=R(2,9);return[`Um prêmio de R$ ${(a+b)*k*10} será dividido entre dois alunos em partes inversamente proporcionais ao número de faltas: ${a} e ${b}`,b*k*10,1,'Quanto recebe o aluno que faltou menos, em R$?']}
+function pcmp(){const o=R(0,4);
+ if(o==0){const w=R(2,6),h=R(4,8),d=R(2,6),k=R(1,3);let w2,h2,d2;do{w2=R(2,10);h2=R(4,9);d2=R(2,8)}while(w2==w&&h2==h&&d2==d);
+  return R(0,1)?[`${w} pedreiros, trabalhando ${h} horas por dia, levantam ${k*w*h*d} m de muro em ${d} dias`,k*w2*h2*d2,1,`Quantos metros de muro ${w2} pedreiros levantam trabalhando ${h2} horas por dia, em ${d2} dias?`]:[`${w} máquinas, funcionando ${h} horas por dia, produzem ${k*w*h*d} peças em ${d} dias`,k*w2*h2*d2,1,`Quantas peças ${w2} máquinas produzem funcionando ${h2} horas por dia, em ${d2} dias?`]}
+ if(o==1){const w=P([2,3,4,6]),h=P([4,6,8]),d=P([6,9,10,12,15]),T=w*h*d,c=[];for(let a=2;a<=12;a++)for(let b=2;b<=10;b++)if(T%(a*b)==0&&a*b!=w*h)c.push([a,b]);const[w2,h2]=P(c);
+  return[`${w} operários, trabalhando ${h} horas por dia, terminam uma obra em ${d} dias`,T/(w2*h2),1,`Em quantos dias ${w2} operários, trabalhando ${h2} horas por dia, terminam a mesma obra?`]}
+ if(o==2){const r=R(2,4),w=R(2,8),d=R(2,8);let w2;do{w2=R(2,10)}while(w2==w);const d2=R(2,10);
+  return[`${w} pedreiros constroem ${r*w*d} m de muro em ${d} dias`,d2,1,`Em quantos dias ${w2} pedreiros constroem ${r*w2*d2} m de muro?`]}
+ if(o==3){const k=R(2,4),p=R(3,8),d=R(2,6);let p2,d2;do{p2=R(4,12);d2=R(2,8)}while(p2==p&&d2==d);
+  return[`Num acampamento, ${p} pessoas consomem ${k*p*d} litros de água em ${d} dias`,k*p2*d2,1,`Quantos litros ${p2} pessoas consomem em ${d2} dias?`]}
+ const v=P([60,80,90]),h=P([6,8]),d=P([3,4,5,6]),T=v*h*d,c=[];for(const a of[40,48,50,60,72,80,90,100])for(const b of[4,5,6,8,9,10])if(T%(a*b)==0&&a*b!=v*h)c.push([a,b]);const[v2,h2]=P(c);
+ return[`Um motorista a ${v} km/h, ${h} horas por dia, faz uma viagem em ${d} dias`,T/(v2*h2),1,`Em quantos dias faz a mesma viagem a ${v2} km/h, ${h2} horas por dia?`]}
+function prop(l=4){return l>=3&&R(0,1)?pcmp():R(0,1)?pdir():pinv()}
+
+function geo(){if(R(0,5)==0)return diag();const o=R(0,4),a=R(3,12),b=R(3,12),c=R(2,6),T=P([[3,4,5],[5,12,13],[8,15,17],[6,8,10],[7,24,25],[9,12,15]]);
  if(o==0)return[`Triângulo de base ${a*2} e altura ${b}`,a*b,1,'Qual é a área?'];
  if(o==1)return[`Triângulo retângulo com catetos ${T[0]} e ${T[1]}`,T[2],1,'Qual é a hipotenusa?'];
  if(o==2)return[`Triângulo retângulo: hipotenusa ${T[2]} e um cateto ${T[0]}`,T[1],1,'Qual é o outro cateto?'];
  if(o==3)return[`Paralelepípedo ${a} × ${b} × ${c}`,a*b*c,1,'Qual é o volume?'];
  return[`Retângulo de área ${a*b} e um lado ${a}`,2*(a+b),1,'Qual é o perímetro?']}
-function prob(){const o=R(0,2);
+function prob(){if(R(0,2)==0)return probf();const o=R(0,2);
  if(o<2){const n=P([4,5,10,20,25,50]),r=R(1,n-1);return[`Uma urna tem ${r} bolas vermelhas e ${n-r} azuis`,r*100/n,1,'Qual é a chance (%) de sortear uma vermelha?']}
  const[q,a]=P([['Ao lançar 1 dado, qual é a chance (%) de sair número par?',50],['Ao lançar 2 moedas, qual é a chance (%) de saírem duas caras?',25],['Em um baralho de 52 cartas, qual é a chance (%) de sortear uma carta de copas?',25]]);return[q,a,1,'Responda só o número, sem o %']}
 function sist(){const x=R(-5,9),y=R(-5,9),a=R(1,4),b=R(1,4),c=R(1,4),d=R(1,4),w=R(0,1);
  return[`${a>1?a:''}x + ${b>1?b:''}y = ${N(a*x+b*y)} e ${c>1?c:''}x − ${d>1?d:''}y = ${N(c*x-d*y)}`,w?y:x,1,w?'Qual é o valor de y?':'Qual é o valor de x?']}
 function pa(){const a=R(-5,10),r=R(-4,7)||3,n=R(8,20),o=R(0,1);
  return[`PA: ${[0,1,2].map(j=>N(a+j*r)).join(', ')}, …`,o?n*(2*a+(n-1)*r)/2:a+(n-1)*r,1,o?`Qual é a soma dos ${n} primeiros termos?`:`Qual é o ${n}º termo?`]}
-function pg(){const a=R(1,5),q=R(2,3),n=R(4,6),o=R(0,1);
+function pg(){if(R(0,3)==0)return pgf();const a=R(1,5),q=R(2,3),n=R(4,6),o=R(0,1);
  return[`PG: ${[0,1,2].map(j=>a*q**j).join(', ')}, …`,o?a*(q**n-1)/(q-1):a*q**(n-1),1,o?`Qual é a soma dos ${n} primeiros termos?`:`Qual é o ${n}º termo?`]}
-function logt(){const f=()=>{const b=P([2,3,5,10]),e=R(1,b==10?3:b==2?9:4);return[`log${SB[b]} ${b**e}`,e]};const[s,v]=f();
+function logt(){if(R(0,3)==0){const b=P([2,3,5]),e=R(1,3);return[`log${SB[b]} (1/${b**e})`,-e,1,'Qual é o valor?']}const f=()=>{const b=P([2,3,5,10]),e=R(1,b==10?3:b==2?9:4);return[`log${SB[b]} ${b**e}`,e]};const[s,v]=f();
  if(R(0,1))return[s,v,1,'Qual é o valor?'];const[s2,v2]=f();return[`${s} + ${s2}`,v+v2,1,'Qual é o valor da soma?']}
 function trig(){if(R(0,9)>3)return tgeo();const[f,g,v]=P([['sen',30,.5],['sen',90,1],['sen',150,.5],['sen',270,-1],['cos',0,1],['cos',60,.5],['cos',90,0],['cos',120,-.5],['cos',180,-1],['tg',45,1],['tg',0,0],['tg',135,-1]]),m=P([2,4,6,8,10,12]);return[`${m} × ${f} ${g}°`,m*v,1,'Qual é o valor?']}
 function vel(){const o=R(0,3);
@@ -212,9 +244,9 @@ function vel(){const o=R(0,3);
  if(o==1){const v=R(3,12)*10,t=R(1,4);return[`Um ciclista a ${v} km/h pedala durante ${t} h 30 min`,v*t+v/2,1,'Quantos km ele percorre?']}
  if(o==2){const a=R(40,90),b=R(30,80),c=R(2,4),d=R(1,3);return[`Uma viagem tem ${a*c} km a ${a} km/h e depois ${b*d} km a ${b} km/h`,c+d,1,'Qual é o tempo total, em horas?']}
  const[a,b,m]=P([[60,40,48],[30,60,40],[20,30,24],[60,90,72],[30,45,36]]);return[`Ida a ${a} km/h e volta a ${b} km/h, pelo mesmo caminho`,m,1,'Qual é a velocidade média do percurso todo, em km/h?']}
-const TOP=[['Porcentagem',pct],['Frações',frac],['MMC, MDC e primos',mmc],['Proporção',prop],['Geometria',geo],['Probabilidade',prob],['Sistemas',sist],['Juros simples',simp],['Juros compostos',comp],['Equações do 2º grau',quad],['Média, moda e mediana',stats],['PA e PG',()=>P([pa,pg])()],['Logaritmo',logt],['Trigonometria',trig],['Velocidade',vel]];
+const TOP=[['Porcentagem',pct],['Frações',frac],['MMC, MDC e primos',mmc],['Proporção e regra de três',prop],['Geometria',geo],['Probabilidade',prob],['Sistemas',sist],['Juros simples',simp],['Juros compostos',comp],['Equações do 2º grau',quad],['Média, moda e mediana',stats],['PA e PG',()=>P([pa,pg])()],['Logaritmo',logt],['Trigonometria',trig],['Velocidade',vel],['Raízes',raiz],['Potências',pot],['Função do 1º grau',fn1],['Função do 2º grau',fn2],['Análise combinatória',anal]];
 const pl=(n,s)=>n+' '+s+(n>1?'s':'');
-function tgeo(){const h=R(3,12)*2,o=R(0,4);
+function tgeo(){if(R(0,4)==0)return tsq();const h=R(3,12)*2,o=R(0,4);
  if(o==0)return[`Triângulo retângulo com hipotenusa ${h} e um ângulo de 30°`,h/2,1,'Quanto mede o cateto oposto a esse ângulo?'];
  if(o==1)return[`Triângulo retângulo com hipotenusa ${h} e um ângulo de 60°`,h/2,1,'Quanto mede o cateto adjacente a esse ângulo?'];
  if(o==2)return[`Triângulo retângulo com um ângulo de 45° e cateto oposto ${h}`,h,1,'Quanto mede o cateto adjacente?'];
@@ -223,10 +255,10 @@ function tgeo(){const h=R(3,12)*2,o=R(0,4);
 function cbas(){const a=R(10,60),b=R(2,9),o=R(0,3);
  return[[`Lia tinha ${a} figurinhas e ganhou ${b}`,`Um ônibus tinha ${a} passageiros e ${b} desceram`,`${b} caixas com ${a} lápis cada`,`${a*b} balas divididas igualmente entre ${b} crianças`][o],[a+b,a-b,a*b,a][o],1,['Quantas ela tem agora?','Quantos passageiros ficaram?','Quantos lápis há no total?','Quantas balas cada criança recebe?'][o]]}
 function cpct(){const n=R(2,15)*20,p=P([10,20,25,50]);return[`Numa escola com ${n} alunos, ${p}% vão à excursão`,n*p/100,1,'Quantos alunos vão?']}
-function cfrac(){const d=P([3,4,5,8]),u=R(1,d-1),n=d*R(2,6);return[`Pedro comeu ${u}/${d} de ${n} fatias de pizza`,u*n/d,1,'Quantas fatias ele comeu?']}
+function cfrac(){if(R(0,1)){const[p,q]=P(CO),[r,s]=P(CO);return[`Uma receita usa ${p}/${q} de xícara de açúcar e ${r}/${s} de xícara de leite`,fr(p*s+r*q,q*s),1,'Quantas xícaras no total? Escreva como fração (ex: 5/6)']}const d=P([3,4,5,8]),u=R(1,d-1),n=d*R(2,6);return[`Pedro comeu ${u}/${d} de ${n} fatias de pizza`,u*n/d,1,'Quantas fatias ele comeu?']}
 function cmmc(){const[p,q]=P(CO),g=R(2,6),a=g*p,b=g*q;
  return R(0,1)?[`Dois sinais piscam a cada ${a} e ${b} segundos e acabaram de piscar juntos`,g*p*q,1,'Depois de quantos segundos piscam juntos de novo?']:[`Duas cordas de ${a} cm e ${b} cm serão cortadas em pedaços iguais, os maiores possíveis`,g,1,'Quantos cm tem cada pedaço?']}
-function cprop(){const a=R(2,6),p=R(2,5),b=R(7,15);return[`Uma receita para ${a} pessoas leva ${a*p} ovos`,b*p,1,`Quantos ovos para ${b} pessoas?`]}
+function cprop(l){return prop(l)}
 function cgeo(){const a=R(3,12),b=R(3,12),c=R(2,6),T=P([[3,4,5],[5,12,13],[8,15,17],[6,8,10]]),o=R(0,2);
  if(o==0)return[`Um terreno retangular mede ${a} m por ${b} m`,2*(a+b),1,'Quantos metros de cerca para dar a volta?'];
  if(o==1)return[`Uma caixa d’água mede ${a} m × ${b} m × ${c} m`,a*b*c,1,'Quantos m³ de água cabem?'];
@@ -246,12 +278,96 @@ function ctrig(){const h=R(3,12)*2,o=R(0,2);
  if(o==1)return[`Um poste projeta sombra de ${h} m quando o sol está a 45° do chão`,h,1,'Qual é a altura do poste, em m?'];
  return[`Uma escada de ${h} m forma 60° com o chão`,h/2,1,'A que distância da parede fica a base, em m?']}
 function cvel(){return vel()}
-;[cpct,cfrac,cmmc,cprop,cgeo,cprob,csist,csimp,ccomp,cquad,cstat,()=>P([cpa,cpg])(),clog,ctrig,cvel].forEach((c,k)=>TOP[k].push(c));
-const CL=[[cbas],[cbas,cfrac,cmmc],[cpct,cfrac,cmmc,cprop],[cpct,cquad,csimp,cstat,cgeo,cprop],[cpct,cquad,csimp,ccomp,cstat,cgeo,cprob,csist],[cpa,cpg,clog,ctrig,cvel,csist,ccomp,cquad,cgeo]];
-function extra(l){const t=[];if(l==1)t.push(frac,mmc);if(l==2)t.push(pct,frac,mmc,prop);if(l==3||l==4)t.push(pct,quad,simp,stats);if(l==3)t.push(prop,geo);if(l==4)t.push(comp,geo,prob,sist);return P(t)(l)}
+;[cpct,cfrac,cmmc,cprop,cgeo,cprob,csist,csimp,ccomp,cquad,cstat,()=>P([cpa,cpg])(),clog,ctrig,cvel,craiz,cpot,cfn1,cfn2,anal].forEach((c,k)=>TOP[k].push(c));
+const CL=[[cbas],[cbas,cfrac,cmmc],[cpct,cfrac,cmmc,cprop,cpot],[cpct,cquad,csimp,cstat,cgeo,cprop,cpot,craiz,cfn1,anal],[cpct,cquad,csimp,ccomp,cstat,cgeo,cprob,csist,cpot,craiz,cfn1,cfn2,anal],[cpa,cpg,clog,ctrig,cvel,csist,ccomp,cquad,cgeo,craiz,cpot,cfn1,cfn2,anal]];
+function gcd(a,b){return b?gcd(b,a%b):Math.abs(a)}
+function norm(s){s=String(s).trim();let m;
+ if(m=s.match(/^(-?\d+)\^(-?\d+)$/))return`${+m[1]}^${+m[2]}`;
+ if(m=s.match(/^(-?)(\d*)√(\d+)$/)){let a=m[2]===''?1:+m[2],b=+m[3];if(!a||!b)return'0';for(let k=2;k*k<=b;k++)while(b%(k*k)==0){b/=k*k;a*=k}return(m[1]?'-':'')+(b==1?a:(a==1?'':a)+'√'+b)}
+ if(m=s.match(/^(-?\d+)(?:\/(-?\d+))?$/)){let n=+m[1],d=m[2]===undefined?1:+m[2];if(!d)return null;if(d<0){n=-n;d=-d}const g=gcd(n,d)||1;n/=g;d/=g;return d==1?String(n):`${n}/${d}`}
+ return null}
+const fr=(n,d)=>norm(n+'/'+d),rt=(a,b)=>norm(a+'√'+b),sup=n=>String(n).replace(/\d/g,d=>'⁰¹²³⁴⁵⁶⁷⁸⁹'[d]),pr=a=>String(a).replace(/\^(\d+)/g,(m,d)=>sup(d)).replace('-','−');
+function probf(){if(R(0,1)){const n=P([6,8,10,12,15,20]),r=R(1,n-1);return[`Uma urna tem ${r} bolas vermelhas e ${n-r} azuis`,fr(r,n),1,'Qual é a probabilidade de sortear uma vermelha? Responda como fração (ex: 1/4)']}const k=R(1,5);return[`Ao lançar 1 dado, qual é a probabilidade de sair número maior que ${k}?`,fr(6-k,6),1,'Responda como fração (ex: 1/4)']}
+function pgf(){const a=P([16,32,64]),n=R(5,9);return[`PG: ${a}, ${a/2}, ${a/4}, …`,fr(a,2**(n-1)),1,`Qual é o ${n}º termo? Se for fração, escreva como 1/4`]}
+function diag(){const a=R(2,9);return[`Um quadrado tem lado ${a}`,rt(a,2),1,'Qual é a diagonal? (ex: 3√2)']}
+function tsq(){const h=R(2,8)*2,m=P([2,4,6,8,10,12]),o=R(0,3);
+ if(o==0)return[`Triângulo retângulo com hipotenusa ${h} e um ângulo de 60°`,rt(h/2,3),1,'Quanto mede o cateto oposto a esse ângulo? (ex: 3√2)'];
+ if(o==1)return[`Triângulo retângulo com hipotenusa ${h} e um ângulo de 30°`,rt(h/2,3),1,'Quanto mede o cateto adjacente a esse ângulo? (ex: 3√2)'];
+ if(o==2)return[`${m} × sen 60°`,rt(m/2,3),1,'Escreva com raiz (ex: 3√2)'];
+ return[`${m} × sen 45°`,rt(m/2,2),1,'Escreva com raiz (ex: 3√2)']}
+function raiz(){const o=R(0,3),k=R(2,6),b=P([2,3,5,6,7]),x=R(2,9),y=R(2,9);
+ if(o==0)return[`Simplifique √${k*k*b}`,rt(k,b),1,'Escreva na forma mais simples (ex: 3√2)',1];
+ if(o==1)return[`√${x} × √${y}`,rt(1,x*y),1,'Escreva na forma mais simples (ex: 3√2)',1];
+ if(o==2)return[`${x}√${b} + ${y}√${b}`,rt(x+y,b),1,'Escreva na forma a√b (ex: 5√2)'];
+ return[`x² = ${k*k*b}, com x > 0`,rt(k,b),1,'Qual é o valor de x? (ex: 3√2)']}
+function pot(){const o=R(0,5),b=R(2,9),e=R(2,4),c=R(2,3),[p,q]=P(CO);
+ if(o==0)return[`${b}${sup(e)}`,b**e,1,'Calcule o valor'];
+ if(o==1)return[`${b}⁻${sup(c)}`,fr(1,b**c),1,'Escreva como fração (ex: 1/8)'];
+ if(o==2)return[Array(e+1).fill(b).join(' × '),`${b}^${e+1}`,1,'Escreva como potência (ex: 3^2)'];
+ if(o==3)return R(0,1)?[`${b}${sup(e)} × ${b}${sup(c)}`,`${b}^${e+c}`,1,'Escreva como potência de mesma base (ex: 3^5)']:[`${b}${sup(e+c)} ÷ ${b}${sup(c)}`,`${b}^${e}`,1,'Escreva como potência de mesma base (ex: 3^5)'];
+ if(o==4)return[`(${p}/${q})²`,fr(p*p,q*q),1,'Escreva como fração (ex: 4/9)'];
+ return[`(−${b})${sup(e)}`,(-b)**e,1,'Calcule o valor']}
+function craiz(){const k=R(2,6),b=P([2,3,5,6,7]);return[`Um quadrado tem área de ${k*k*b} m²`,rt(k,b),1,'Qual é o lado, em m? (ex: 3√2)']}
+function cpot(){const n=R(3,9);return['Uma cultura começa com 1 bactéria e dobra a cada hora',`2^${n}`,1,`Quantas há após ${n} horas? Escreva como potência de 2 (ex: 2^5)`]}
+const lin=(a,b)=>`${a==1?'':a==-1?'−':N(a)}x`+(b?` ${sg(b)} ${Math.abs(b)}`:''),
+ qdr=(a,b,c)=>`${a==1?'':a==-1?'−':N(a)}x²`+(b?` ${sg(b)} ${Math.abs(b)==1?'':Math.abs(b)}x`:'')+(c?` ${sg(c)} ${Math.abs(c)}`:''),
+ win=()=>({x0:-8,x1:8,y0:-8,y1:8,sx:1,sy:1,lb:2});
+function rng(lo,hi){if(hi<=lo)hi=lo+1;const s=[1,2,5,10,20,25,50,100,200,500,1000].find(v=>(hi-lo)/v<=8)||1000;return[Math.floor(lo/s)*s,Math.ceil(hi/s)*s,s]}
+function draw(g){const W=300,L=34,Rr=12,T=14,B=26,w=W-L-Rr,h=W-T-B,lb=g.lb||1,X=x=>L+(x-g.x0)/(g.x1-g.x0)*w,Y=y=>T+(g.y1-y)/(g.y1-g.y0)*h,tx=v=>String(v).replace('-','−');
+ let s=`<svg viewBox="0 0 ${W} ${W}" role="img" aria-label="Plano cartesiano com o gráfico da função" style="width:100%;height:auto;display:block;font:600 11px Fredoka,system-ui,sans-serif"><defs><clipPath id="cp"><rect x="${L}" y="${T}" width="${w}" height="${h}"/></clipPath></defs><rect x="${L}" y="${T}" width="${w}" height="${h}" style="fill:var(--card)"/>`;
+ for(let x=g.x0,n=0;x<=g.x1;x+=g.sx,n++){s+=`<line x1="${X(x)}" y1="${T}" x2="${X(x)}" y2="${T+h}" style="stroke:var(--line);stroke-width:1"/>`;if(n%lb==0)s+=`<text x="${X(x)}" y="${T+h+15}" text-anchor="middle" style="fill:var(--muted)">${tx(x)}</text>`}
+ for(let y=g.y0,n=0;y<=g.y1;y+=g.sy,n++){s+=`<line x1="${L}" y1="${Y(y)}" x2="${L+w}" y2="${Y(y)}" style="stroke:var(--line);stroke-width:1"/>`;if(n%lb==0)s+=`<text x="${L-5}" y="${Y(y)+4}" text-anchor="end" style="fill:var(--muted)">${tx(y)}</text>`}
+ if(g.x0<=0&&g.x1>=0)s+=`<line x1="${X(0)}" y1="${T}" x2="${X(0)}" y2="${T+h}" style="stroke:var(--ink);stroke-width:2"/>`;
+ if(g.y0<=0&&g.y1>=0)s+=`<line x1="${L}" y1="${Y(0)}" x2="${L+w}" y2="${Y(0)}" style="stroke:var(--ink);stroke-width:2"/>`;
+ s+=`<text x="${L+w-4}" y="${T+h-6}" text-anchor="end" style="fill:var(--head)">${g.xl||'x'}</text><text x="${L+5}" y="${T+12}" style="fill:var(--head)">${g.yl||'y'}</text>`;
+ if(g.f){const a=g.d?g.d[0]:g.x0,b=g.d?g.d[1]:g.x1;let p='';for(let i=0;i<=240;i++){const x=a+(b-a)*i/240;p+=X(x).toFixed(1)+','+Y(g.f(x)).toFixed(1)+' '}s+=`<polyline clip-path="url(#cp)" points="${p}" style="fill:none;stroke:var(--btn);stroke-width:3;stroke-linecap:round;stroke-linejoin:round"/>`}
+ (g.pts||[]).forEach(([x,y,n])=>{s+=`<circle cx="${X(x)}" cy="${Y(y)}" r="4.5" style="fill:var(--bad);stroke:var(--card);stroke-width:1.5"/><text x="${X(x)+7}" y="${Y(y)-7}" style="fill:var(--ink);paint-order:stroke;stroke:var(--card);stroke-width:3px">${n}</text>`});
+ return s+'</svg>'}
+function fn1(){const o=R(0,4);let a,b,x1,x2;
+ do{a=R(-3,3);b=R(-4,4);x1=R(-3,3);x2=R(-3,3)}while(!a||x1==x2||Math.abs(a*x1+b)>7||Math.abs(a*x2+b)>7);
+ const f=x=>a*x+b,g={...win(),f};
+ if(o<2){g.pts=[[x1,f(x1),'A'],[x2,f(x2),'B']];return[`Reta que passa por A(${N(x1)}, ${N(f(x1))}) e B(${N(x2)}, ${N(f(x2))})`,o?b:a,1,o?'Qual é o coeficiente linear (b) de f(x) = ax + b?':'Qual é o coeficiente angular (a) de f(x) = ax + b?',0,g]}
+ if(o==2)return[`f(x) = ${lin(a,b)}`,f(x1),1,`Qual é o valor de f(${N(x1)})?`,0,g];
+ if(o==3){let r,c;do{r=R(-5,5);c=R(-3,3)}while(!r||!c||Math.abs(c*r)>7);return[`f(x) = ${lin(c,-c*r)}`,r,1,'Em que ponto a reta corta o eixo x? Responda só o valor de x',0,{...win(),f:x=>c*(x-r)}]}
+ return[`f(x) = ${lin(a,b)}`,x1,1,`Para qual valor de x temos f(x) = ${N(f(x1))}?`,0,g]}
+function fn2(){const o=R(0,5);let a,h,k,c;
+ const mk=()=>{const b=-2*a*h;c=a*h*h+k;return{E:`f(x) = ${qdr(a,b,c)}`,f:x=>a*x*x+b*x+c}};
+ do{a=P([1,-1,2,-2]);h=R(-3,3);k=R(-5,5)}while(Math.abs(a)==2&&Math.abs(k)>3||o==5&&(Math.abs(a)==2||Math.abs(a*h*h+k)>7));
+ const{E,f}=mk(),g={...win(),f};
+ if(o==0)return[E,h,1,'Qual é a abscissa do vértice (xv)?',0,g];
+ if(o==1)return[E,k,1,a>0?'Qual é o valor mínimo da função?':'Qual é o valor máximo da função?',0,g];
+ if(o==2){g.pts=[[h,k,'V'],[h+1,k+a,'P']];return[`Parábola de vértice V(${N(h)}, ${N(k)}) passando por P(${N(h+1)}, ${N(k+a)})`,a,1,'Qual é o coeficiente a de f(x) = ax² + bx + c?',0,g]}
+ if(o==3){const aa=P([1,-1]);let r,s;do{r=R(-5,5);s=R(-5,5)}while(s-r<1||s-r>5);const[w,v]=P([['Qual é a maior raiz?',s],['Qual é a menor raiz?',r],['Qual é a soma das raízes?',r+s]]);return[`f(x) = ${qdr(aa,-aa*(r+s),aa*r*s)}`,v,1,w,0,{...win(),f:x=>aa*(x-r)*(x-s)}]}
+ if(o==4){const aa=P([1,-1]),kk=P([-4,-2,0,3,5]);a=aa;k=kk;const m=mk();return[m.E,kk==0?1:(aa>0)==(kk<0)?2:0,1,'Quantas raízes reais ela tem?',0,{...win(),f:m.f}]}
+ return[E,c,1,'Em que ponto a parábola corta o eixo y? Responda só o valor de y',0,g]}
+function cfn1(){const C=P([
+ [(F,c)=>`Um táxi cobra R$ ${F} de bandeirada mais R$ ${c} por km rodado`,[4,6,8,10],[2,3,4,5],12,'km','R$',k=>`Quanto custa uma corrida de ${k} km, em R$?`,y=>`Quantos km foram rodados se a corrida custou R$ ${y}?`],
+ [(F,c)=>`Um vendedor recebe R$ ${F} fixos mais R$ ${c} por venda`,[100,200,300],[10,20,50],10,'vendas','R$',k=>`Quanto ele recebe ao fazer ${k} vendas, em R$?`,y=>`Quantas vendas ele fez se recebeu R$ ${y}?`],
+ [(F,c)=>`Um reservatório já tem ${F} litros e recebe ${c} litros por minuto`,[10,20,30,50],[2,3,4,5,10],10,'min','litros',k=>`Quantos litros há após ${k} minutos?`,y=>`Após quantos minutos há ${y} litros?`],
+ [(F,c)=>`Uma academia cobra matrícula de R$ ${F} mais R$ ${c} por mês`,[50,80,100],[30,40,50],12,'meses','R$',k=>`Quanto se paga em ${k} meses, em R$?`,y=>`Em quantos meses se pagam R$ ${y}?`]]),
+ F=P(C[1]),c=P(C[2]),xm=C[3],k=R(2,xm-2),f=x=>c*x+F,[y0,y1,sy]=rng(0,f(xm)),g={x0:0,x1:xm,y0,y1,sx:xm==12?2:1,sy,f,xl:C[4],yl:C[5]};
+ return R(0,1)?[`${C[0](F,c)}: f(x) = ${c}x + ${F}`,f(k),1,C[6](k),0,g]:[`${C[0](F,c)}: f(x) = ${c}x + ${F}`,k,1,C[7](f(k)),0,g]}
+function cfn2(){const o=R(0,2);
+ if(o==0){const b=P([4,6,8,10]),f=t=>-t*t+b*t,[y0,y1,sy]=rng(0,b*b/4),[x0,x1,sx]=rng(0,b+1),[q,v]=P([['Em que instante ela atinge a altura máxima, em s?',b/2],['Qual é a altura máxima, em m?',b*b/4],['Em que instante ela volta ao chão, em s?',b]]);
+  return[`Uma bola é lançada para cima e sua altura é h(t) = −t² + ${b}t, com h em metros e t em segundos`,v,1,q,0,{x0,x1,y0,y1,sx,sy,f,d:[0,b],xl:'t (s)',yl:'h (m)'}]}
+ if(o==1){const r=R(1,5),s=r+2*R(1,3),f=x=>-(x-r)*(x-s),[y0,y1,sy]=rng(-r*s,((s-r)/2)**2),[x0,x1,sx]=rng(0,s+1),[q,v]=P([['Para qual x o lucro é máximo?',(r+s)/2],['Qual é o lucro máximo, em milhares de R$?',((s-r)/2)**2],['Qual é o maior valor de x com lucro igual a zero?',s]]);
+  return[`O lucro de uma fábrica é L(x) = −x² + ${r+s}x − ${r*s}, com x em centenas de peças e L em milhares de R$`,v,1,q,0,{x0,x1,y0,y1,sx,sy,f,d:[0,s+1],xl:'x',yl:'L'}]}
+ const p=P([4,6,8,10,12]),f=x=>x*(p-x),[y0,y1,sy]=rng(0,p*p/4),[x0,x1,sx]=rng(0,p),[q,v]=P([['Que valor de x dá a maior área, em m?',p/2],['Qual é a maior área possível, em m²?',p*p/4]]);
+ return[`Um fazendeiro tem ${2*p} m de cerca para um retângulo. Se um lado mede x, a área é A(x) = x(${p} − x) m²`,v,1,q,0,{x0,x1,y0,y1,sx,sy,f,d:[0,p],xl:'x (m)',yl:'A (m²)'}]}
+const fat=n=>n<2?1:n*fat(n-1),cb=(n,p)=>fat(n)/(fat(p)*fat(n-p));
+function anal(){const o=R(0,7);
+ if(o==0){const a=R(2,6),b=R(2,6),c=R(2,4);return R(0,1)?[`Uma lanchonete tem ${a} tipos de pão, ${b} de recheio e ${c} de molho`,a*b*c,1,'Quantos sanduíches diferentes dá para montar, com um de cada?']:[`Lia tem ${a} camisas e ${b} calças`,a*b,1,'De quantas formas ela pode se vestir com uma camisa e uma calça?']}
+ if(o==1){const n=R(3,7);return[`${n} amigos vão sentar em uma fila de cinema`,fat(n),1,'De quantas formas diferentes eles podem se organizar na fila?']}
+ if(o==2){const n=R(5,9),p=R(2,3);return[`Numa corrida com ${n} atletas, saem os ${p} primeiros colocados`,fat(n)/fat(n-p),1,`De quantas formas diferentes pode ficar o pódio (1º ao ${p}º lugar)?`]}
+ if(o==3){const n=R(4,12);return R(0,1)?[`Numa sala há ${n} alunos e todos vão formar duplas`,cb(n,2),1,'Quantas duplas diferentes é possível formar?']:[`Em uma festa com ${n} pessoas, cada uma cumprimenta todas as outras uma única vez`,cb(n,2),1,'Quantos apertos de mão acontecem?']}
+ if(o==4){const w=P(['AMOR','MESA','CASA','OVO','PAPAI','ARARA','BANANA','LIVRO','PATO','ESCOLA']),c={};for(const x of w)c[x]=(c[x]||0)+1;return[`Considere a palavra ${w}`,Object.values(c).reduce((r,v)=>r/fat(v),fat(w.length)),1,'Quantos anagramas ela tem?']}
+ if(o==5){const n=R(2,4);return[`Uma senha tem ${n} algarismos de 0 a 9, e os algarismos podem se repetir`,10**n,1,'Quantas senhas diferentes existem?']}
+ if(o==6){const k=R(2,3);return[`Um sorteio usa números de ${k} algarismos distintos`,k==2?81:648,1,`Quantos números de ${k} algarismos distintos existem?`]}
+ const n=R(5,9);return[`Uma pizzaria tem ${n} sabores e uma promoção leva 3 sabores diferentes`,cb(n,3),1,'Quantas combinações de 3 sabores são possíveis?']}
+function extra(l){const t=[];if(l==1)t.push(frac,mmc);if(l==2)t.push(pct,frac,mmc,prop);if(l==3||l==4)t.push(pct,quad,simp,stats);if(l==3)t.push(prop,geo);if(l==4)t.push(comp,geo,prob,sist,prop);if(l>=2)t.push(pot);if(l>=3)t.push(raiz,fn1,anal);if(l>=4)t.push(fn2);return P(t)(l)}
 function gen(l){let a,b,c,d,e,x,o;
  if(Math.random()<.2)return P(CL[l])(l);
- if(l==5)return P([pa,pg,logt,trig,vel,vel,sist,comp,quad,geo])(l);
+ if(l==5)return P([pa,pg,logt,trig,vel,vel,sist,comp,quad,geo,raiz,pot,prop,prop,fn1,fn2,anal,anal])(l);
  if(l>=1&&Math.random()<[0,.35,.5,.6,.6][l])return extra(l);
  if(l==0){o=R(0,3);
   if(o==0){a=R(1,20);b=R(1,20);return[`${a} + ${b}`,a+b]}
@@ -296,6 +412,7 @@ function next(){
  const[t,a,e,h]=qs[i],T=TL*1000;
  $('lv').textContent=tr==null?'Nível '+(lv+1):TOP[tr][0];$('cnt').textContent=`Conta ${i+1} de ${qs.length}`;$('sc').textContent='✓ '+ok;
  $('q').textContent=e?t:t+' = ?';$('q').className=t.length>24?'sm':'';
+ const G=qs[i][5];$('plot').classList.toggle('hidden',!G);$('plot').innerHTML=G?draw(G):'';
  $('hint').textContent=h||(e?'Descubra o valor de x':'Quanto dá?');
  $('ans').value='';$('ans').focus();locked=false;mood('');
  $('timer').classList.toggle('hidden',NT);clearInterval(iv);if(NT)return;end=Date.now()+T;
@@ -305,12 +422,12 @@ function next(){
  tick();iv=setInterval(tick,100)}
 function answer(v){
  if(locked)return;locked=true;clearInterval(iv);
- const a=qs[i][1],good=v===a,L=TL*1000;if(!NT)ts.push(v===null?L:Math.min(L,Math.max(0,L-(end-Date.now()))));
+ const a=qs[i][1],good=v!==null&&norm(v)===String(a)&&(!qs[i][4]||v.trim()===String(a)),L=TL*1000;if(!NT)ts.push(v===null?L:Math.min(L,Math.max(0,L-(end-Date.now()))));
  if(good){ok++;$('sc').textContent='✓ '+ok;say(P(['Isso mesmo!','Excelente!','Acertou em cheio!','Brilhante!','Show de bola!']));mood('hop')}
- else{say((v===null?'Tempo esgotado! ':'Quase! ')+'A resposta era '+N(a)+'.');mood('shake')}
+ else{say((v===null?'Tempo esgotado! ':'Quase! ')+'A resposta era '+pr(a)+'.');mood('shake')}
  $('q').classList.add(good?'good':'bad');
  setTimeout(()=>{i++;next()},good?900:2000)}
-function submit(){const v=$('ans').value;if(v!==''&&v!=='-')answer(+v)}
+function submit(){const v=$('ans').value;if(norm(v)!==null)answer(v);else if(v.trim())say('Não entendi essa resposta. Confira o formato.')}
 function finish(){
  const n=qs.length,r=ok/n,pass=tr!=null||r>=.7,last=tr!=null||lv==LV.length-1;
  show('res');
@@ -339,7 +456,9 @@ $('home').onclick=()=>show('intro');
 $('quit').onclick=()=>{clearInterval(iv);locked=true;show('intro')};
 $('go').onclick=submit;
 $('ans').addEventListener('keydown',e=>{if(e.key==='Enter')submit()});
-$('ans').addEventListener('input',e=>{const s=e.target.value.replace(/[−–]/g,'-').replace(/[^\d-]/g,'');e.target.value=(s.startsWith('-')?'-':'')+s.replace(/-/g,'').slice(0,6)});
+$('ans').addEventListener('input',e=>{e.target.value=e.target.value.replace(/[−–]/g,'-').replace(/²/g,'^2').replace(/³/g,'^3').replace(/[rR]/g,'√').replace(/[^\d\-/^√]/g,'').slice(0,14)});
+$('keys').addEventListener('pointerdown',e=>e.preventDefault());
+$('keys').onclick=e=>{const b=e.target.closest('[data-k]');if(!b)return;const a=$('ans'),s=a.selectionStart??a.value.length,t=a.selectionEnd??s;a.value=(a.value.slice(0,s)+b.dataset.k+a.value.slice(t)).slice(0,14);a.focus();a.dispatchEvent(new Event('input'))};
 $('sg').addEventListener('pointerdown',e=>e.preventDefault());
 $('sg').onclick=()=>{const a=$('ans');a.value=a.value.startsWith('-')?a.value.slice(1):'-'+a.value;a.focus()};
 </script>
