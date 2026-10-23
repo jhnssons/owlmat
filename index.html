@@ -68,7 +68,7 @@ p{margin:6px 0;color:var(--muted);line-height:1.4}
 <section id="intro" class="card">
   <div class="slot big"></div>
   <h1>Coruja da Matemática</h1>
-  <p>Comece do nível 1 e suba acertando 70% das contas, ou toque em qualquer nível para jogar direto nele. Nos níveis 4 a 6, você escolhe o tempo, ou jogue sem cronômetro.</p>
+  <p>Comece do nível 1 e suba acertando 70% das contas, ou toque em qualquer nível para jogar direto nele. Pode responder com vírgula (ex: 2,5), e valores aproximados com 2 casas decimais também valem. Nos níveis 4 a 6, você escolhe o tempo, ou jogue sem cronômetro.</p>
   <ul class="levels" id="lvlist"></ul>
   <label class="nt"><input type="checkbox" id="nt"> Modo sem cronômetro</label>
   <button class="btn" id="start">Começar do nível 1</button>
@@ -82,8 +82,8 @@ p{margin:6px 0;color:var(--muted);line-height:1.4}
   <p id="hint"></p>
   <div id="q"></div>
   <div id="plot" class="plot hidden"></div>
-  <div class="ans"><button class="sign" id="sg" type="button" aria-label="Trocar sinal, positivo ou negativo">±</button><input id="ans" type="text" inputmode="numeric" pattern="-?[0-9]*" autocomplete="off" enterkeyhint="done" aria-label="Sua resposta" placeholder="?"><button class="btn" id="go">Responder</button></div>
-  <div class="keys" id="keys"><button type="button" data-k="/" aria-label="Barra de fração">a/b</button><button type="button" data-k="√" aria-label="Raiz quadrada">√</button><button type="button" data-k="^" aria-label="Potência">xⁿ</button></div>
+  <div class="ans"><button class="sign" id="sg" type="button" aria-label="Trocar sinal, positivo ou negativo">±</button><input id="ans" type="text" inputmode="decimal" pattern="-?[0-9,/^√]*" autocomplete="off" enterkeyhint="done" aria-label="Sua resposta" placeholder="?"><button class="btn" id="go">Responder</button></div>
+  <div class="keys" id="keys"><button type="button" data-k="," aria-label="Vírgula decimal">,</button><button type="button" data-k="/" aria-label="Barra de fração">a/b</button><button type="button" data-k="√" aria-label="Raiz quadrada">√</button><button type="button" data-k="^" aria-label="Potência">xⁿ</button></div>
 </section>
 
 <section id="ths" class="card hidden">
@@ -161,7 +161,7 @@ const br=v=>v.toLocaleString('pt-BR'),sg=v=>v<0?'−':'+',shuf=a=>a.sort(()=>Mat
 function go(l){if(LV[l].ch&&!$('nt').checked){pend=l;$('tpt').textContent=`Nível ${l+1}: tempo por conta`;show('tp')}else startLevel(l)}
 function poly(k,b,c){let s=(k==1?'':k)+'x²';if(b)s+=` ${sg(b)} ${Math.abs(b)==1?'':Math.abs(b)}x`;if(c)s+=` ${sg(c)} ${Math.abs(c)}`;return s+' = 0'}
 function pct(){if(R(0,5)==0){const p=P([5,10,20,25,40,50,75]);return[`${p}% como fração irredutível`,fr(p,100),1,'Escreva a fração (ex: 1/4)',1]}const o=R(0,3);let p,v;
- if(o==0){p=P([10,20,25,50,75]);v=R(2,40)*20;return[`${p}% de ${v}`,p*v/100]}
+ if(o==0){p=P([10,20,25,50,75,5,15,35]);v=R(2,40)*10;return[`${p}% de ${v}`,p*v/100]}
  if(o==1){p=P([10,20,25,50]);v=R(2,25)*20;return[`Produto de R$ ${v} com ${p}% de desconto`,v-v*p/100,1,'Quanto ele passa a custar, em R$?']}
  if(o==2){p=P([5,10,15,20,25,30]);v=R(5,40)*100;return[`Salário de R$ ${br(v)} com aumento de ${p}%`,v+v*p/100,1,'Qual é o novo valor, em R$?']}
  v=P([20,40,80,100,200]);p=P([5,10,20,25,50,75]);return[`${v*p/100} é quantos por cento de ${v}?`,p,1,'Responda só o número, sem o %']}
@@ -172,7 +172,7 @@ function simp(){const C=R(2,50)*100,i=R(1,10),t=R(2,12),J=C*i*t/100,o=R(0,2);
 function comp(){const[i,t,m]=P([[10,2,100],[10,3,1000],[20,2,100],[20,3,1000],[5,2,400],[50,2,200]]),C=m*R(1,m<=100?20:5),M=Math.round(C*(1+i/100)**t),o=R(0,1);
  return[`Capital de R$ ${br(C)}, juros compostos de ${i}% ao mês, durante ${t} meses`,o?M-C:M,1,o?'Qual é o juro composto, em R$?':'Qual é o montante, em R$?']}
 function stats(l){const o=R(0,2),m=R(6,20);let a,s;
- if(o==0){const n=R(4,6);do{a=Array.from({length:n-1},()=>R(m-5,m+5));a.push(m*n-sum(a))}while(a[n-1]<1||a[n-1]>m+9);return[`Dados: ${a.join(', ')}`,m,1,'Qual é a média?']}
+ if(o==0){const n=R(4,6);if(l>=3&&R(0,2)==0){a=Array.from({length:n},()=>R(m-5,m+5));return[`Dados: ${a.join(', ')}`,sum(a)/n,1,'Qual é a média? Se não for exata, use até 2 casas decimais (ex: 3,67)']}do{a=Array.from({length:n-1},()=>R(m-5,m+5));a.push(m*n-sum(a))}while(a[n-1]<1||a[n-1]>m+9);return[`Dados: ${a.join(', ')}`,m,1,'Qual é a média?']}
  if(o==1){const v=R(3,25),k=l>3?2:3,u=new Set([v]);a=Array(k).fill(v);while(a.length<k+4){const x=R(1,30);if(!u.has(x)){u.add(x);a.push(x)}}return[`Dados: ${shuf(a).join(', ')}`,v,1,'Qual é a moda?']}
  const n=l>3?P([5,6,7]):P([5,7]);do{a=Array.from({length:n},()=>R(1,40));s=[...a].sort((p,q)=>p-q)}while(n%2==0&&(s[n/2-1]+s[n/2])%2);
  return[`Dados: ${a.join(', ')}`,n%2?s[(n-1)/2]:(s[n/2-1]+s[n/2])/2,1,'Qual é a mediana?']}
@@ -221,7 +221,7 @@ function pcmp(){const o=R(0,4);
  return[`Um motorista a ${v} km/h, ${h} horas por dia, faz uma viagem em ${d} dias`,T/(v2*h2),1,`Em quantos dias faz a mesma viagem a ${v2} km/h, ${h2} horas por dia?`]}
 function prop(l=4){return l>=3&&R(0,1)?pcmp():R(0,1)?pdir():pinv()}
 
-function geo(){if(R(0,5)==0)return diag();const o=R(0,4),a=R(3,12),b=R(3,12),c=R(2,6),T=P([[3,4,5],[5,12,13],[8,15,17],[6,8,10],[7,24,25],[9,12,15]]);
+function geo(){if(R(0,3)==0)return circ();if(R(0,5)==0)return diag();const o=R(0,4),a=R(3,12),b=R(3,12),c=R(2,6),T=P([[3,4,5],[5,12,13],[8,15,17],[6,8,10],[7,24,25],[9,12,15]]);
  if(o==0)return[`Triângulo de base ${a*2} e altura ${b}`,a*b,1,'Qual é a área?'];
  if(o==1)return[`Triângulo retângulo com catetos ${T[0]} e ${T[1]}`,T[2],1,'Qual é a hipotenusa?'];
  if(o==2)return[`Triângulo retângulo: hipotenusa ${T[2]} e um cateto ${T[0]}`,T[1],1,'Qual é o outro cateto?'];
@@ -259,7 +259,7 @@ function cfrac(){if(R(0,1)){const[p,q]=P(CO),[r,s]=P(CO);return[`Uma receita usa
 function cmmc(){const[p,q]=P(CO),g=R(2,6),a=g*p,b=g*q;
  return R(0,1)?[`Dois sinais piscam a cada ${a} e ${b} segundos e acabaram de piscar juntos`,g*p*q,1,'Depois de quantos segundos piscam juntos de novo?']:[`Duas cordas de ${a} cm e ${b} cm serão cortadas em pedaços iguais, os maiores possíveis`,g,1,'Quantos cm tem cada pedaço?']}
 function cprop(l){return prop(l)}
-function cgeo(){const a=R(3,12),b=R(3,12),c=R(2,6),T=P([[3,4,5],[5,12,13],[8,15,17],[6,8,10]]),o=R(0,2);
+function cgeo(){if(R(0,3)==0)return circ();const a=R(3,12),b=R(3,12),c=R(2,6),T=P([[3,4,5],[5,12,13],[8,15,17],[6,8,10]]),o=R(0,2);
  if(o==0)return[`Um terreno retangular mede ${a} m por ${b} m`,2*(a+b),1,'Quantos metros de cerca para dar a volta?'];
  if(o==1)return[`Uma caixa d’água mede ${a} m × ${b} m × ${c} m`,a*b*c,1,'Quantos m³ de água cabem?'];
  return[`Uma escada de ${T[2]} m encosta numa parede, com a base a ${T[0]} m dela`,T[1],1,'Que altura da parede ela alcança, em m?']}
@@ -280,13 +280,22 @@ function ctrig(){const h=R(3,12)*2,o=R(0,2);
 function cvel(){return vel()}
 ;[cpct,cfrac,cmmc,cprop,cgeo,cprob,csist,csimp,ccomp,cquad,cstat,()=>P([cpa,cpg])(),clog,ctrig,cvel,craiz,cpot,cfn1,cfn2,anal].forEach((c,k)=>TOP[k].push(c));
 const CL=[[cbas],[cbas,cfrac,cmmc],[cpct,cfrac,cmmc,cprop,cpot],[cpct,cquad,csimp,cstat,cgeo,cprop,cpot,craiz,cfn1,anal],[cpct,cquad,csimp,ccomp,cstat,cgeo,cprob,csist,cpot,craiz,cfn1,cfn2,anal],[cpa,cpg,clog,ctrig,cvel,csist,ccomp,cquad,cgeo,craiz,cpot,cfn1,cfn2,anal]];
+function num(s){s=String(s).trim().replace(',','.');let m;
+ if(/^-?(\d+\.?\d*|\.\d+)$/.test(s))return parseFloat(s);
+ if(m=s.match(/^(-?\d+)\/(-?\d+)$/))return+m[2]?+m[1]/+m[2]:null;
+ if(m=s.match(/^(-?)(\d*)√(\d+)$/))return(m[1]?-1:1)*(m[2]===''?1:+m[2])*Math.sqrt(+m[3]);
+ if(m=s.match(/^(-?\d+)\^(-?\d+)$/))return(+m[1])**(+m[2]);
+ return null}
+function same(v,a,ex){const s=v.trim();if(norm(s)===String(a)&&(!ex||s===String(a)))return true;if(ex||!/[.,]/.test(s))return false;
+ const x=num(s),y=num(a);if(x===null||y===null)return false;
+ return Math.abs(x-y)<=(Number.isInteger(y)?1e-9:Math.max(.01,Math.abs(y)*.002))}
 function gcd(a,b){return b?gcd(b,a%b):Math.abs(a)}
 function norm(s){s=String(s).trim();let m;
  if(m=s.match(/^(-?\d+)\^(-?\d+)$/))return`${+m[1]}^${+m[2]}`;
  if(m=s.match(/^(-?)(\d*)√(\d+)$/)){let a=m[2]===''?1:+m[2],b=+m[3];if(!a||!b)return'0';for(let k=2;k*k<=b;k++)while(b%(k*k)==0){b/=k*k;a*=k}return(m[1]?'-':'')+(b==1?a:(a==1?'':a)+'√'+b)}
  if(m=s.match(/^(-?\d+)(?:\/(-?\d+))?$/)){let n=+m[1],d=m[2]===undefined?1:+m[2];if(!d)return null;if(d<0){n=-n;d=-d}const g=gcd(n,d)||1;n/=g;d/=g;return d==1?String(n):`${n}/${d}`}
  return null}
-const fr=(n,d)=>norm(n+'/'+d),rt=(a,b)=>norm(a+'√'+b),sup=n=>String(n).replace(/\d/g,d=>'⁰¹²³⁴⁵⁶⁷⁸⁹'[d]),pr=a=>String(a).replace(/\^(\d+)/g,(m,d)=>sup(d)).replace('-','−');
+const fr=(n,d)=>norm(n+'/'+d),rt=(a,b)=>norm(a+'√'+b),sup=n=>String(n).replace(/\d/g,d=>'⁰¹²³⁴⁵⁶⁷⁸⁹'[d]),pr=a=>(typeof a=='number'&&!Number.isInteger(a)?a.toFixed(2).replace(/0+$/,'').replace(/\.$/,''):String(a)).replace('.',',').replace(/\^(\d+)/g,(m,d)=>sup(d)).replace('-','−');
 function probf(){if(R(0,1)){const n=P([6,8,10,12,15,20]),r=R(1,n-1);return[`Uma urna tem ${r} bolas vermelhas e ${n-r} azuis`,fr(r,n),1,'Qual é a probabilidade de sortear uma vermelha? Responda como fração (ex: 1/4)']}const k=R(1,5);return[`Ao lançar 1 dado, qual é a probabilidade de sair número maior que ${k}?`,fr(6-k,6),1,'Responda como fração (ex: 1/4)']}
 function pgf(){const a=P([16,32,64]),n=R(5,9);return[`PG: ${a}, ${a/2}, ${a/4}, …`,fr(a,2**(n-1)),1,`Qual é o ${n}º termo? Se for fração, escreva como 1/4`]}
 function diag(){const a=R(2,9);return[`Um quadrado tem lado ${a}`,rt(a,2),1,'Qual é a diagonal? (ex: 3√2)']}
@@ -364,6 +373,14 @@ function anal(){const o=R(0,7);
  if(o==5){const n=R(2,4);return[`Uma senha tem ${n} algarismos de 0 a 9, e os algarismos podem se repetir`,10**n,1,'Quantas senhas diferentes existem?']}
  if(o==6){const k=R(2,3);return[`Um sorteio usa números de ${k} algarismos distintos`,k==2?81:648,1,`Quantos números de ${k} algarismos distintos existem?`]}
  const n=R(5,9);return[`Uma pizzaria tem ${n} sabores e uma promoção leva 3 sabores diferentes`,cb(n,3),1,'Quantas combinações de 3 sabores são possíveis?']}
+const rd=x=>Math.round(x*100)/100;
+function circ(){const pi=P([3,3.14]),u=P(['cm','m']),r=R(2,15),o=R(0,5),nm=x=>String(rd(x)).replace('.',','),U=` (use π = ${String(pi).replace('.',',')})`;
+ if(o==0)return[`Uma roda de bicicleta tem raio de ${r} ${u}${U}`,rd(2*pi*r),1,`Qual é o comprimento da roda (circunferência), em ${u}?`];
+ if(o==1)return[`Uma praça circular tem raio de ${r} m${U}`,rd(pi*r*r),1,'Qual é a área da praça, em m²?'];
+ if(o==2)return[`Uma pista circular tem ${nm(2*pi*r)} m de comprimento${U}`,r,1,'Qual é o raio da pista, em m?'];
+ if(o==3){const n=R(2,10);return[`Uma roda de raio ${r} cm dá ${n} voltas completas${U}`,rd(n*2*pi*r),1,'Quantos cm ela percorre?']}
+ if(o==4)return[`Uma pizza tem diâmetro de ${2*r} cm${U}`,rd(pi*r*r),1,'Qual é a área da pizza, em cm²?'];
+ return[`Um jardim circular tem área de ${nm(pi*r*r)} m²${U}`,r,1,'Qual é o raio do jardim, em m?']}
 function extra(l){const t=[];if(l==1)t.push(frac,mmc);if(l==2)t.push(pct,frac,mmc,prop);if(l==3||l==4)t.push(pct,quad,simp,stats);if(l==3)t.push(prop,geo);if(l==4)t.push(comp,geo,prob,sist,prop);if(l>=2)t.push(pot);if(l>=3)t.push(raiz,fn1,anal);if(l>=4)t.push(fn2);return P(t)(l)}
 function gen(l){let a,b,c,d,e,x,o;
  if(Math.random()<.2)return P(CL[l])(l);
@@ -413,7 +430,7 @@ function next(){
  $('lv').textContent=tr==null?'Nível '+(lv+1):TOP[tr][0];$('cnt').textContent=`Conta ${i+1} de ${qs.length}`;$('sc').textContent='✓ '+ok;
  $('q').textContent=e?t:t+' = ?';$('q').className=t.length>24?'sm':'';
  const G=qs[i][5];$('plot').classList.toggle('hidden',!G);$('plot').innerHTML=G?draw(G):'';
- $('hint').textContent=h||(e?'Descubra o valor de x':'Quanto dá?');
+ $('hint').textContent=h?h+(/fração|\d\/\d/.test(h)&&!/Se (for|der)|Simplifique|potência/.test(h+t)&&!qs[i][4]?' Se der número inteiro, escreva só o número.':''):(e?'Descubra o valor de x':'Quanto dá?');
  $('ans').value='';$('ans').focus();locked=false;mood('');
  $('timer').classList.toggle('hidden',NT);clearInterval(iv);if(NT)return;end=Date.now()+T;
  const tick=()=>{const r=end-Date.now();
@@ -422,12 +439,12 @@ function next(){
  tick();iv=setInterval(tick,100)}
 function answer(v){
  if(locked)return;locked=true;clearInterval(iv);
- const a=qs[i][1],good=v!==null&&norm(v)===String(a)&&(!qs[i][4]||v.trim()===String(a)),L=TL*1000;if(!NT)ts.push(v===null?L:Math.min(L,Math.max(0,L-(end-Date.now()))));
+ const a=qs[i][1],good=v!==null&&same(v,a,qs[i][4]),L=TL*1000;if(!NT)ts.push(v===null?L:Math.min(L,Math.max(0,L-(end-Date.now()))));
  if(good){ok++;$('sc').textContent='✓ '+ok;say(P(['Isso mesmo!','Excelente!','Acertou em cheio!','Brilhante!','Show de bola!']));mood('hop')}
  else{say((v===null?'Tempo esgotado! ':'Quase! ')+'A resposta era '+pr(a)+'.');mood('shake')}
  $('q').classList.add(good?'good':'bad');
  setTimeout(()=>{i++;next()},good?900:2000)}
-function submit(){const v=$('ans').value;if(norm(v)!==null)answer(v);else if(v.trim())say('Não entendi essa resposta. Confira o formato.')}
+function submit(){const v=$('ans').value;if(norm(v)!==null||num(v)!==null)answer(v);else if(v.trim())say('Não entendi essa resposta. Confira o formato.')}
 function finish(){
  const n=qs.length,r=ok/n,pass=tr!=null||r>=.7,last=tr!=null||lv==LV.length-1;
  show('res');
@@ -456,7 +473,7 @@ $('home').onclick=()=>show('intro');
 $('quit').onclick=()=>{clearInterval(iv);locked=true;show('intro')};
 $('go').onclick=submit;
 $('ans').addEventListener('keydown',e=>{if(e.key==='Enter')submit()});
-$('ans').addEventListener('input',e=>{e.target.value=e.target.value.replace(/[−–]/g,'-').replace(/²/g,'^2').replace(/³/g,'^3').replace(/[rR]/g,'√').replace(/[^\d\-/^√]/g,'').slice(0,14)});
+$('ans').addEventListener('input',e=>{e.target.value=e.target.value.replace(/[−–]/g,'-').replace(/²/g,'^2').replace(/³/g,'^3').replace(/[rR]/g,'√').replace(/\./g,',').replace(/[^\d\-/^√,]/g,'').slice(0,14)});
 $('keys').addEventListener('pointerdown',e=>e.preventDefault());
 $('keys').onclick=e=>{const b=e.target.closest('[data-k]');if(!b)return;const a=$('ans'),s=a.selectionStart??a.value.length,t=a.selectionEnd??s;a.value=(a.value.slice(0,s)+b.dataset.k+a.value.slice(t)).slice(0,14);a.focus();a.dispatchEvent(new Event('input'))};
 $('sg').addEventListener('pointerdown',e=>e.preventDefault());
