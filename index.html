@@ -15,7 +15,7 @@ html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;min-height:100%;display:flex;justify-content:center;padding:18px 14px 28px;font-family:"Fredoka","Trebuchet MS",system-ui,sans-serif;color:var(--ink);background-color:var(--bg);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:28px 28px}
 main{width:100%;max-width:440px}
 .card{background:var(--card);border:3px solid var(--line);border-radius:26px;padding:20px 18px;text-align:center;box-shadow:0 8px 0 var(--line)}
-.hidden{display:none}
+.hidden{display:none!important}
 h1,h2{margin:6px 0 4px;color:var(--head);font-weight:700;line-height:1.1}
 h1{font-size:2rem}h2{font-size:1.6rem}
 p{margin:6px 0;color:var(--muted);line-height:1.4}
@@ -41,11 +41,17 @@ p{margin:6px 0;color:var(--muted);line-height:1.4}
 .timer{display:flex;align-items:center;gap:10px;margin:6px 0}
 .track{flex:1;height:14px;background:var(--track);border-radius:9px;overflow:hidden}
 #fill{height:100%;width:100%;border-radius:9px;background:linear-gradient(90deg,#42a5f5,#1e88e5)}
-#tm{min-width:2.6ch;font-size:1.7rem;font-weight:600;color:var(--head);font-variant-numeric:tabular-nums}
+#tm{min-width:3.4ch;font-size:1.7rem;font-weight:600;color:var(--head);font-variant-numeric:tabular-nums}
 .low #fill{background:linear-gradient(90deg,#ffa726,var(--bad))}.low #tm{color:var(--bad)}
-#hint{margin:10px 0 0}
+#hint{margin:10px 0 0;font-weight:500;font-size:1.05rem}
 #q{font-size:clamp(2.1rem,10.5vw,3rem);font-weight:700;margin:4px 0 16px;min-height:1.3em;color:var(--ink)}
 #q.good{color:var(--ok)}#q.bad{color:var(--bad)}
+#q.sm{font-size:1.45rem;line-height:1.3;font-weight:600}
+#tp .btn{margin-top:10px}
+#rc{color:var(--head);font-weight:600}
+.nt{display:flex;align-items:center;justify-content:center;gap:8px;margin:0 0 14px;color:var(--muted);cursor:pointer}.nt input{width:20px;height:20px;accent-color:var(--btn)}
+#tgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}
+#tgrid button{background:var(--track);border:2px solid transparent;border-radius:12px;padding:12px 8px;font:inherit;font-size:.92rem;color:var(--ink);cursor:pointer}#tgrid button:hover,#tgrid button:active{border-color:var(--btn)}
 .ans{display:flex;gap:8px}
 .ans input{flex:1;min-width:0;border:3px solid var(--line);border-radius:14px;padding:10px;font:inherit;font-size:1.6rem;text-align:center;color:var(--ink);background:var(--card)}
 .ans .btn{width:auto}
@@ -60,9 +66,11 @@ p{margin:6px 0;color:var(--muted);line-height:1.4}
 <section id="intro" class="card">
   <div class="slot big"></div>
   <h1>Coruja da Matemática</h1>
-  <p>Comece do nível 1 e suba acertando 70% das contas, ou toque em qualquer nível para jogar direto nele.</p>
+  <p>Comece do nível 1 e suba acertando 70% das contas, ou toque em qualquer nível para jogar direto nele. Nos níveis 4 a 6, você escolhe o tempo, ou jogue sem cronômetro.</p>
   <ul class="levels" id="lvlist"></ul>
+  <label class="nt"><input type="checkbox" id="nt"> Modo sem cronômetro</label>
   <button class="btn" id="start">Começar do nível 1</button>
+  <button class="btn ghost" id="trbtn">Treino por tema</button>
 </section>
 
 <section id="game" class="card hidden">
@@ -74,12 +82,30 @@ p{margin:6px 0;color:var(--muted);line-height:1.4}
   <div class="ans"><button class="sign" id="sg" type="button" aria-label="Trocar sinal, positivo ou negativo">±</button><input id="ans" type="text" inputmode="numeric" pattern="-?[0-9]*" autocomplete="off" enterkeyhint="done" aria-label="Sua resposta" placeholder="?"><button class="btn" id="go">Responder</button></div>
 </section>
 
+<section id="ths" class="card hidden">
+  <h2>Treino por tema</h2>
+  <p>Escolha um assunto e resolva 10 contas só dele, sem passar de nível.</p>
+  <div id="tgrid"></div>
+  <button class="btn ghost" id="thb">Voltar</button>
+</section>
+
+<section id="tp" class="card hidden">
+  <div class="slot big"></div>
+  <h2 id="tpt"></h2>
+  <p>Escolha quanto tempo você quer para cada conta. Mais tempo, mais calma para pensar.</p>
+  <button class="btn" data-t="120">120 segundos</button>
+  <button class="btn" data-t="240">240 segundos</button>
+  <button class="btn" data-t="480">480 segundos</button>
+  <button class="btn ghost" id="tpb">Voltar</button>
+</section>
+
 <section id="res" class="card hidden">
   <div class="slot big"></div>
   <h2 id="rt"></h2>
   <div id="st"></div>
   <div class="big-num" id="rs"></div>
   <p id="rv"></p>
+  <p id="rc"></p>
   <p id="rm"></p>
   <button class="btn" id="nx"></button>
   <button class="btn ghost" id="keep"></button>
@@ -110,14 +136,78 @@ const $=id=>document.getElementById(id);
 const R=(a,b)=>Math.floor(Math.random()*(b-a+1))+a,P=a=>a[R(0,a.length-1)],N=v=>String(v).replace('-','−');
 const LV=[
  {n:20,t:30,d:'Contas básicas',m:'Vamos aquecer com contas básicas!'},
- {n:10,t:45,d:'Maiores e negativos',m:'Agora tem números maiores e negativos!'},
- {n:10,t:60,d:'Parênteses e equações',m:'Parênteses e equações simples!'},
- {n:10,t:90,d:'Equações de dois passos',m:'Equações mais difíceis, vamos nessa!'},
- {n:10,t:120,d:'Desafio final',m:'Nível máximo! Concentração total!'}];
-$('lvlist').innerHTML=LV.map((c,k)=>`<li><button data-l="${k}"><b>Nível ${k+1}</b><span>${c.d}</span><em>${c.n} contas, ${c.t} s</em></button></li>`).join('');
-$('lvlist').onclick=e=>{const b=e.target.closest('button');if(b)startLevel(+b.dataset.l)};
+ {n:10,t:45,d:'Negativos, frações e MMC',m:'Negativos, frações, MMC e MDC!'},
+ {n:10,t:60,d:'Porcentagem e proporção',m:'Porcentagem, equações e regra de três!'},
+ {n:10,t:120,ch:1,d:'Juros, 2º grau e estatística',m:'Juros, equações do 2º grau, média, moda e mediana!'},
+ {n:10,t:120,ch:1,d:'Probabilidade e sistemas',m:'Probabilidade, sistemas e juros compostos!'},
+ {n:10,t:120,ch:1,d:'Mestre',m:'Nível Mestre! PA, PG, logaritmo e trigonometria!'}];
+const renderList=()=>{const R0=rec();$('lvlist').innerHTML=LV.map((c,k)=>`<li><button data-l="${k}"><b>Nível ${k+1}</b><span>${c.d}${R0[k]?`<br><small>${rtxt(R0[k],c.n)}</small>`:''}</span><em>${c.n} contas, ${c.ch?'120 a 480':c.t} s</em></button></li>`).join('')};renderList();
+$('lvlist').onclick=e=>{const b=e.target.closest('button');if(b)go(+b.dataset.l)};
 
+const br=v=>v.toLocaleString('pt-BR'),sg=v=>v<0?'−':'+',shuf=a=>a.sort(()=>Math.random()-.5),sum=a=>a.reduce((s,x)=>s+x,0),fmt=s=>TL>=60?Math.floor(s/60)+':'+String(s%60).padStart(2,'0'):s;
+function go(l){if(LV[l].ch&&!$('nt').checked){pend=l;$('tpt').textContent=`Nível ${l+1}: tempo por conta`;show('tp')}else startLevel(l)}
+function poly(k,b,c){let s=(k==1?'':k)+'x²';if(b)s+=` ${sg(b)} ${Math.abs(b)==1?'':Math.abs(b)}x`;if(c)s+=` ${sg(c)} ${Math.abs(c)}`;return s+' = 0'}
+function pct(){const o=R(0,3);let p,v;
+ if(o==0){p=P([10,20,25,50,75]);v=R(2,40)*20;return[`${p}% de ${v}`,p*v/100]}
+ if(o==1){p=P([10,20,25,50]);v=R(2,25)*20;return[`Produto de R$ ${v} com ${p}% de desconto`,v-v*p/100,1,'Quanto ele passa a custar, em R$?']}
+ if(o==2){p=P([5,10,15,20,25,30]);v=R(5,40)*100;return[`Salário de R$ ${br(v)} com aumento de ${p}%`,v+v*p/100,1,'Qual é o novo valor, em R$?']}
+ v=P([20,40,80,100,200]);p=P([5,10,20,25,50,75]);return[`${v*p/100} é quantos por cento de ${v}?`,p,1,'Responda só o número, sem o %']}
+function quad(l){const k=l>3?R(1,3):1,r=R(-8,6),s=r+R(1,9),o=R(0,3);
+ return[poly(k,-k*(r+s),k*r*s),[s,r,r+s,r*s][o],1,['Qual é a maior raiz?','Qual é a menor raiz?','Qual é a soma das raízes?','Qual é o produto das raízes?'][o]]}
+function simp(){const C=R(2,50)*100,i=R(1,10),t=R(2,12),J=C*i*t/100,o=R(0,2);
+ return[o==2?`Capital de R$ ${br(C)} rendeu R$ ${br(J)} de juros simples em ${t} meses`:`Capital de R$ ${br(C)}, juros simples de ${i}% ao mês, durante ${t} meses`,[J,C+J,i][o],1,['Qual é o juro, em R$?','Qual é o montante, em R$?','Qual é a taxa mensal, em %?'][o]]}
+function comp(){const[i,t,m]=P([[10,2,100],[10,3,1000],[20,2,100],[20,3,1000],[5,2,400],[50,2,200]]),C=m*R(1,m<=100?20:5),M=Math.round(C*(1+i/100)**t),o=R(0,1);
+ return[`Capital de R$ ${br(C)}, juros compostos de ${i}% ao mês, durante ${t} meses`,o?M-C:M,1,o?'Qual é o juro composto, em R$?':'Qual é o montante, em R$?']}
+function stats(l){const o=R(0,2),m=R(6,20);let a,s;
+ if(o==0){const n=R(4,6);do{a=Array.from({length:n-1},()=>R(m-5,m+5));a.push(m*n-sum(a))}while(a[n-1]<1||a[n-1]>m+9);return[`Dados: ${a.join(', ')}`,m,1,'Qual é a média?']}
+ if(o==1){const v=R(3,25),k=l>3?2:3,u=new Set([v]);a=Array(k).fill(v);while(a.length<k+4){const x=R(1,30);if(!u.has(x)){u.add(x);a.push(x)}}return[`Dados: ${shuf(a).join(', ')}`,v,1,'Qual é a moda?']}
+ const n=l>3?P([5,6,7]):P([5,7]);do{a=Array.from({length:n},()=>R(1,40));s=[...a].sort((p,q)=>p-q)}while(n%2==0&&(s[n/2-1]+s[n/2])%2);
+ return[`Dados: ${a.join(', ')}`,n%2?s[(n-1)/2]:(s[n/2-1]+s[n/2])/2,1,'Qual é a mediana?']}
+const isP=n=>{if(n<2)return 0;for(let d=2;d*d<=n;d++)if(n%d==0)return 0;return 1},CO=[[2,3],[3,4],[2,5],[3,5],[4,5],[5,6],[3,7]],SB={2:'₂',3:'₃',5:'₅',10:'₁₀'};
+function rec(){try{return JSON.parse(localStorage.getItem('coruja')||'{}')}catch(e){return{}}}
+function save(v){try{localStorage.setItem('coruja',JSON.stringify(v))}catch(e){}}
+function rtxt(o,n){return o?`Recorde: ${o.s}/${n} acertos`+(o.t?`, ${o.t.toFixed(1).replace('.',',')} s de média`:''):''}
+function frac(){const o=R(0,2);
+ if(o==0){const d=P([2,3,4,5,8,10]),u=R(1,d-1),n=d*R(2,12);return[`${u}/${d} de ${n}`,u*n/d]}
+ if(o==1){const[p,q]=P(CO),k=R(2,6);return[`Simplifique ${k*p}/${k*q}`,q,1,'Qual é o denominador da fração simplificada?']}
+ const d=P([2,3,4,5]),m=R(2,4),a=R(1,d),b=R(1,d*m-1);return[`${a}/${d} + ${b}/${d*m}`,a*m+b,1,`O resultado é ?/${d*m}. Qual é o numerador?`]}
+function mmc(){const[p,q]=P(CO),g=R(2,6),a=g*p,b=g*q,o=R(0,3);
+ if(o==0)return[`MDC de ${a} e ${b}`,g,1,'Qual é o MDC?'];
+ if(o==1)return[`MMC de ${a} e ${b}`,g*p*q,1,'Qual é o MMC?'];
+ if(o==2){const lo=R(1,30),hi=lo+R(10,20);let c=0;for(let n=lo;n<=hi;n++)c+=isP(n);return[`Números de ${lo} a ${hi}`,c,1,'Quantos são primos?']}
+ const m=R(3,9),h=R(5,20)*10;return[`Números de 1 a ${h}`,Math.floor(h/m),1,`Quantos são múltiplos de ${m}?`]}
+function prop(){const o=R(0,2);
+ if(o==0){const a=R(2,6),p=R(2,9),b=R(7,15);return[`${a} canetas custam R$ ${a*p}`,b*p,1,`Quanto custam ${b} canetas, em R$?`]}
+ if(o==1){const w=R(2,8);let d,v;do{d=R(4,12)}while(d==w);const t=w*d;do{v=R(2,24)}while(t%v||v==w);return[`${w} operários fazem uma obra em ${d} dias`,t/v,1,`Em quantos dias ${v} operários fazem a mesma obra?`]}
+ const[a,b]=P(CO),k=R(2,9);return[`Duas partes na razão ${a}:${b} somam ${(a+b)*k}`,Math.max(a,b)*k,1,'Quanto vale a maior parte?']}
+function geo(){const o=R(0,4),a=R(3,12),b=R(3,12),c=R(2,6),T=P([[3,4,5],[5,12,13],[8,15,17],[6,8,10],[7,24,25],[9,12,15]]);
+ if(o==0)return[`Triângulo de base ${a*2} e altura ${b}`,a*b,1,'Qual é a área?'];
+ if(o==1)return[`Triângulo retângulo com catetos ${T[0]} e ${T[1]}`,T[2],1,'Qual é a hipotenusa?'];
+ if(o==2)return[`Triângulo retângulo: hipotenusa ${T[2]} e um cateto ${T[0]}`,T[1],1,'Qual é o outro cateto?'];
+ if(o==3)return[`Paralelepípedo ${a} × ${b} × ${c}`,a*b*c,1,'Qual é o volume?'];
+ return[`Retângulo de área ${a*b} e um lado ${a}`,2*(a+b),1,'Qual é o perímetro?']}
+function prob(){const o=R(0,2);
+ if(o<2){const n=P([4,5,10,20,25,50]),r=R(1,n-1);return[`Uma urna tem ${r} bolas vermelhas e ${n-r} azuis`,r*100/n,1,'Qual é a chance (%) de sortear uma vermelha?']}
+ const[q,a]=P([['Ao lançar 1 dado, qual é a chance (%) de sair número par?',50],['Ao lançar 2 moedas, qual é a chance (%) de saírem duas caras?',25],['Em um baralho de 52 cartas, qual é a chance (%) de sortear uma carta de copas?',25]]);return[q,a,1,'Responda só o número, sem o %']}
+function sist(){const x=R(-5,9),y=R(-5,9),a=R(1,4),b=R(1,4),c=R(1,4),d=R(1,4),w=R(0,1);
+ return[`${a>1?a:''}x + ${b>1?b:''}y = ${N(a*x+b*y)} e ${c>1?c:''}x − ${d>1?d:''}y = ${N(c*x-d*y)}`,w?y:x,1,w?'Qual é o valor de y?':'Qual é o valor de x?']}
+function pa(){const a=R(-5,10),r=R(-4,7)||3,n=R(8,20),o=R(0,1);
+ return[`PA: ${[0,1,2].map(j=>N(a+j*r)).join(', ')}, …`,o?n*(2*a+(n-1)*r)/2:a+(n-1)*r,1,o?`Qual é a soma dos ${n} primeiros termos?`:`Qual é o ${n}º termo?`]}
+function pg(){const a=R(1,5),q=R(2,3),n=R(4,6),o=R(0,1);
+ return[`PG: ${[0,1,2].map(j=>a*q**j).join(', ')}, …`,o?a*(q**n-1)/(q-1):a*q**(n-1),1,o?`Qual é a soma dos ${n} primeiros termos?`:`Qual é o ${n}º termo?`]}
+function logt(){const f=()=>{const b=P([2,3,5,10]),e=R(1,b==10?3:b==2?9:4);return[`log${SB[b]} ${b**e}`,e]};const[s,v]=f();
+ if(R(0,1))return[s,v,1,'Qual é o valor?'];const[s2,v2]=f();return[`${s} + ${s2}`,v+v2,1,'Qual é o valor da soma?']}
+function trig(){const[f,g,v]=P([['sen',30,.5],['sen',90,1],['sen',150,.5],['sen',270,-1],['cos',0,1],['cos',60,.5],['cos',90,0],['cos',120,-.5],['cos',180,-1],['tg',45,1],['tg',0,0],['tg',135,-1]]),m=P([2,4,6,8,10,12]);return[`${m} × ${f} ${g}°`,m*v,1,'Qual é o valor?']}
+function vel(){const o=R(0,3);
+ if(o==0){const v=R(4,15)*10,t=R(2,6);return[`Um carro percorre ${v*t} km em ${t} horas`,v,1,'Qual é a velocidade média, em km/h?']}
+ if(o==1){const v=R(3,12)*10,t=R(1,4);return[`Um ciclista a ${v} km/h pedala durante ${t} h 30 min`,v*t+v/2,1,'Quantos km ele percorre?']}
+ if(o==2){const a=R(40,90),b=R(30,80),c=R(2,4),d=R(1,3);return[`Uma viagem tem ${a*c} km a ${a} km/h e depois ${b*d} km a ${b} km/h`,c+d,1,'Qual é o tempo total, em horas?']}
+ const[a,b,m]=P([[60,40,48],[30,60,40],[20,30,24],[60,90,72],[30,45,36]]);return[`Ida a ${a} km/h e volta a ${b} km/h, pelo mesmo caminho`,m,1,'Qual é a velocidade média do percurso todo, em km/h?']}
+const TOP=[['Porcentagem',pct],['Frações',frac],['MMC, MDC e primos',mmc],['Proporção',prop],['Geometria',geo],['Probabilidade',prob],['Sistemas',sist],['Juros simples',simp],['Juros compostos',comp],['Equações do 2º grau',quad],['Média, moda e mediana',stats],['PA e PG',()=>P([pa,pg])()],['Logaritmo',logt],['Trigonometria',trig],['Velocidade',vel]];
+function extra(l){const t=[];if(l==1)t.push(frac,mmc);if(l==2)t.push(pct,frac,mmc,prop);if(l==3||l==4)t.push(pct,quad,simp,stats);if(l==3)t.push(prop,geo);if(l==4)t.push(comp,geo,prob,sist);return P(t)(l)}
 function gen(l){let a,b,c,d,e,x,o;
+ if(l==5)return P([pa,pg,logt,trig,vel,vel,sist,comp,quad,geo])(l);
+ if(l>=1&&Math.random()<[0,.35,.5,.6,.6][l])return extra(l);
  if(l==0){o=R(0,3);
   if(o==0){a=R(1,20);b=R(1,20);return[`${a} + ${b}`,a+b]}
   if(o==1){a=R(5,30);b=R(1,a-1);return[`${a} − ${b}`,a-b]}
@@ -151,45 +241,53 @@ function gen(l){let a,b,c,d,e,x,o;
  if(o==4){a=P([10,20,25,50,75]);b=R(2,30)*20;return[`${a}% de ${b}`,a*b/100]}
  a=R(12,25);b=R(11,19);return[`${a} × ${b}`,a*b]}
 
-let lv=0,qs=[],i=0,ok=0,ts=[],locked=true,iv=0,end=0,again=()=>{};
-const show=id=>['intro','game','res'].forEach(s=>$(s).classList.toggle('hidden',s!=id));
+let lv=0,qs=[],i=0,ok=0,ts=[],TL=30,pend=0,tr=null,NT=false,locked=true,iv=0,end=0,again=()=>{};
+const show=id=>{if(id=='intro')renderList();['intro','game','res','tp','ths'].forEach(s=>$(s).classList.toggle('hidden',s!=id))};
 const say=t=>$('say').textContent=t;
 function mood(c){const o=document.querySelector('#game .owl');o.classList.remove('hop','shake');void o.offsetWidth;if(c)o.classList.add(c)}
-function startLevel(l){lv=l;qs=Array.from({length:LV[l].n},()=>gen(l));i=0;ok=0;ts=[];show('game');say(LV[l].m);next()}
+function startLevel(l,t,k){lv=l;tr=k==null?null:k;NT=$('nt').checked;TL=t||(tr==null?LV[l].t:90);qs=Array.from({length:tr==null?LV[l].n:10},()=>tr==null?gen(l):TOP[tr][1](4));i=0;ok=0;ts=[];show('game');say(tr==null?LV[l].m:'Treino: '+TOP[tr][0]);next()}
 function next(){
  if(i>=qs.length)return finish();
- const[t,a,e]=qs[i],T=LV[lv].t*1000;
- $('lv').textContent='Nível '+(lv+1);$('cnt').textContent=`Conta ${i+1} de ${qs.length}`;$('sc').textContent='✓ '+ok;
- $('q').textContent=e?t:t+' = ?';$('q').className='';
- $('hint').textContent=e?'Descubra o valor de x':'Quanto dá?';
+ const[t,a,e,h]=qs[i],T=TL*1000;
+ $('lv').textContent=tr==null?'Nível '+(lv+1):TOP[tr][0];$('cnt').textContent=`Conta ${i+1} de ${qs.length}`;$('sc').textContent='✓ '+ok;
+ $('q').textContent=e?t:t+' = ?';$('q').className=t.length>24?'sm':'';
+ $('hint').textContent=h||(e?'Descubra o valor de x':'Quanto dá?');
  $('ans').value='';$('ans').focus();locked=false;mood('');
- end=Date.now()+T;clearInterval(iv);
+ $('timer').classList.toggle('hidden',NT);clearInterval(iv);if(NT)return;end=Date.now()+T;
  const tick=()=>{const r=end-Date.now();
-  if(r<=0){clearInterval(iv);$('tm').textContent=0;$('fill').style.width='0%';return answer(null)}
-  $('tm').textContent=Math.ceil(r/1000);$('fill').style.width=r/T*100+'%';$('timer').classList.toggle('low',r<=10000)};
+  if(r<=0){clearInterval(iv);$('tm').textContent=fmt(0);$('fill').style.width='0%';return answer(null)}
+  $('tm').textContent=fmt(Math.ceil(r/1000));$('fill').style.width=r/T*100+'%';$('timer').classList.toggle('low',r<=10000)};
  tick();iv=setInterval(tick,100)}
 function answer(v){
  if(locked)return;locked=true;clearInterval(iv);
- const a=qs[i][1],good=v===a,L=LV[lv].t*1000;ts.push(v===null?L:Math.min(L,Math.max(0,L-(end-Date.now()))));
+ const a=qs[i][1],good=v===a,L=TL*1000;if(!NT)ts.push(v===null?L:Math.min(L,Math.max(0,L-(end-Date.now()))));
  if(good){ok++;$('sc').textContent='✓ '+ok;say(P(['Isso mesmo!','Excelente!','Acertou em cheio!','Brilhante!','Show de bola!']));mood('hop')}
  else{say((v===null?'Tempo esgotado! ':'Quase! ')+'A resposta era '+N(a)+'.');mood('shake')}
- $('q').className=good?'good':'bad';
+ $('q').classList.add(good?'good':'bad');
  setTimeout(()=>{i++;next()},good?900:2000)}
 function submit(){const v=$('ans').value;if(v!==''&&v!=='-')answer(+v)}
 function finish(){
- const n=qs.length,r=ok/n,pass=r>=.7,last=lv==LV.length-1;
+ const n=qs.length,r=ok/n,pass=tr!=null||r>=.7,last=tr!=null||lv==LV.length-1;
  show('res');
- $('rt').textContent=pass?(last?'Parabéns, você zerou!':`Nível ${lv+1} concluído!`):'Quase lá!';
+ $('rt').textContent=tr!=null?'Treino concluído!':pass?(last?'Parabéns, você zerou!':`Nível ${lv+1} concluído!`):'Quase lá!';
  $('st').textContent='⭐'.repeat(r>=.9?3:r>=.7?2:r>=.4?1:0)||'📚';
  $('rs').textContent=`${ok} de ${n} acertos`;
- $('rv').textContent=`Tempo médio: ${(ts.reduce((s,x)=>s+x,0)/ts.length/1000).toFixed(1).replace('.',',')} s por conta (limite de ${LV[lv].t} s)`;
- $('rm').textContent=pass?(last?'Você completou os 5 níveis. Que mestre da matemática!':`Próximo: nível ${lv+2}, com ${LV[lv+1].n} contas de ${LV[lv+1].t} segundos cada. Ou fique neste nível e treine mais.`):'Você precisa de 70% de acertos para avançar. Vamos tentar de novo?';
- $('nx').classList.toggle('hidden',!pass||last);$('nx').textContent=`Ir para o nível ${lv+2}`;$('keep').textContent=pass?`Manter o nível ${lv+1}`:'Tentar de novo';$('keep').classList.toggle('ghost',pass&&!last);
+ const av=sum(ts)/ts.length/1000;let rc='';
+ if(!NT&&tr==null){const db=rec(),o=db[lv]||{},ns=ok>0&&(!o.s||ok>o.s),nt=r>=.7&&(!o.t||av<o.t);if(ns||nt){db[lv]={s:ns?ok:o.s,t:nt?av:o.t};save(db)}rc=(ns||nt?'Novo recorde! ':'')+rtxt(db[lv],n)}
+ $('rv').textContent=NT?'Modo sem cronômetro':`Tempo médio: ${av.toFixed(1).replace('.',',')} s por conta (limite de ${TL} s)`;$('rc').textContent=rc;
+ $('rm').textContent=tr!=null?'Boa! Treine de novo ou escolha outro tema.':pass?(last?'Você completou os 6 níveis. Que mestre da matemática!':`Próximo: nível ${lv+2}, com ${LV[lv+1].n} contas ${LV[lv+1].ch?'e tempo à sua escolha.':`de ${LV[lv+1].t} segundos cada.`} Ou fique neste nível e treine mais.`):'Você precisa de 70% de acertos para avançar. Vamos tentar de novo?';
+ $('nx').classList.toggle('hidden',!pass||last);$('nx').textContent=`Ir para o nível ${lv+2}`;$('keep').textContent=tr!=null?'Treinar de novo':pass?`Manter o nível ${lv+1}`:'Tentar de novo';$('keep').classList.toggle('ghost',pass&&!last);
  
  const o=document.querySelector('#res .owl');o.classList.remove('hop');void o.offsetWidth;if(pass)o.classList.add('hop')}
 $('start').onclick=()=>startLevel(0);
-$('nx').onclick=()=>startLevel(lv+1);
-$('keep').onclick=()=>startLevel(lv);
+$('nx').onclick=()=>go(lv+1);
+$('keep').onclick=()=>startLevel(lv,TL,tr);
+$('tp').onclick=e=>{const b=e.target.closest('[data-t]');if(b)startLevel(pend,+b.dataset.t)};
+$('tpb').onclick=()=>show('intro');
+$('trbtn').onclick=()=>show('ths');
+$('thb').onclick=()=>show('intro');
+$('tgrid').innerHTML=TOP.map((t,k)=>`<button data-k="${k}">${t[0]}</button>`).join('');
+$('tgrid').onclick=e=>{const b=e.target.closest('button');if(b)startLevel(0,null,+b.dataset.k)};
 $('home').onclick=()=>show('intro');
 $('quit').onclick=()=>{clearInterval(iv);locked=true;show('intro')};
 $('go').onclick=submit;
