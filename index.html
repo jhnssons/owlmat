@@ -47,7 +47,7 @@ p{margin:6px 0;color:var(--muted);line-height:1.4}
 #q{font-size:clamp(2.1rem,10.5vw,3rem);font-weight:700;margin:4px 0 16px;min-height:1.3em;color:var(--ink)}
 #q.good{color:var(--ok)}#q.bad{color:var(--bad)}
 #q.sm{font-size:1.45rem;line-height:1.3;font-weight:600}
-#tp .btn{margin-top:10px}
+#tp .btn,#tt .btn{margin-top:10px}
 #rc{color:var(--head);font-weight:600}
 .nt{display:flex;align-items:center;justify-content:center;gap:8px;margin:0 0 14px;color:var(--muted);cursor:pointer}.nt input{width:20px;height:20px;accent-color:var(--btn)}
 #tgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}
@@ -84,9 +84,18 @@ p{margin:6px 0;color:var(--muted);line-height:1.4}
 
 <section id="ths" class="card hidden">
   <h2>Treino por tema</h2>
-  <p>Escolha um assunto e resolva 10 contas só dele, sem passar de nível.</p>
+  <p>Escolha um assunto e resolva 10 contas só dele, com 240 segundos por conta ou sem limite de tempo.</p>
   <div id="tgrid"></div>
   <button class="btn ghost" id="thb">Voltar</button>
+</section>
+
+<section id="tt" class="card hidden">
+  <div class="slot big"></div>
+  <h2 id="ttt"></h2>
+  <p>Como você quer treinar?</p>
+  <button class="btn" data-u="240">240 segundos por conta</button>
+  <button class="btn" data-u="-1">Tempo ilimitado</button>
+  <button class="btn ghost" id="ttb">Voltar</button>
 </section>
 
 <section id="tp" class="card hidden">
@@ -197,15 +206,51 @@ function pg(){const a=R(1,5),q=R(2,3),n=R(4,6),o=R(0,1);
  return[`PG: ${[0,1,2].map(j=>a*q**j).join(', ')}, …`,o?a*(q**n-1)/(q-1):a*q**(n-1),1,o?`Qual é a soma dos ${n} primeiros termos?`:`Qual é o ${n}º termo?`]}
 function logt(){const f=()=>{const b=P([2,3,5,10]),e=R(1,b==10?3:b==2?9:4);return[`log${SB[b]} ${b**e}`,e]};const[s,v]=f();
  if(R(0,1))return[s,v,1,'Qual é o valor?'];const[s2,v2]=f();return[`${s} + ${s2}`,v+v2,1,'Qual é o valor da soma?']}
-function trig(){const[f,g,v]=P([['sen',30,.5],['sen',90,1],['sen',150,.5],['sen',270,-1],['cos',0,1],['cos',60,.5],['cos',90,0],['cos',120,-.5],['cos',180,-1],['tg',45,1],['tg',0,0],['tg',135,-1]]),m=P([2,4,6,8,10,12]);return[`${m} × ${f} ${g}°`,m*v,1,'Qual é o valor?']}
+function trig(){if(R(0,9)>3)return tgeo();const[f,g,v]=P([['sen',30,.5],['sen',90,1],['sen',150,.5],['sen',270,-1],['cos',0,1],['cos',60,.5],['cos',90,0],['cos',120,-.5],['cos',180,-1],['tg',45,1],['tg',0,0],['tg',135,-1]]),m=P([2,4,6,8,10,12]);return[`${m} × ${f} ${g}°`,m*v,1,'Qual é o valor?']}
 function vel(){const o=R(0,3);
  if(o==0){const v=R(4,15)*10,t=R(2,6);return[`Um carro percorre ${v*t} km em ${t} horas`,v,1,'Qual é a velocidade média, em km/h?']}
  if(o==1){const v=R(3,12)*10,t=R(1,4);return[`Um ciclista a ${v} km/h pedala durante ${t} h 30 min`,v*t+v/2,1,'Quantos km ele percorre?']}
  if(o==2){const a=R(40,90),b=R(30,80),c=R(2,4),d=R(1,3);return[`Uma viagem tem ${a*c} km a ${a} km/h e depois ${b*d} km a ${b} km/h`,c+d,1,'Qual é o tempo total, em horas?']}
  const[a,b,m]=P([[60,40,48],[30,60,40],[20,30,24],[60,90,72],[30,45,36]]);return[`Ida a ${a} km/h e volta a ${b} km/h, pelo mesmo caminho`,m,1,'Qual é a velocidade média do percurso todo, em km/h?']}
 const TOP=[['Porcentagem',pct],['Frações',frac],['MMC, MDC e primos',mmc],['Proporção',prop],['Geometria',geo],['Probabilidade',prob],['Sistemas',sist],['Juros simples',simp],['Juros compostos',comp],['Equações do 2º grau',quad],['Média, moda e mediana',stats],['PA e PG',()=>P([pa,pg])()],['Logaritmo',logt],['Trigonometria',trig],['Velocidade',vel]];
+const pl=(n,s)=>n+' '+s+(n>1?'s':'');
+function tgeo(){const h=R(3,12)*2,o=R(0,4);
+ if(o==0)return[`Triângulo retângulo com hipotenusa ${h} e um ângulo de 30°`,h/2,1,'Quanto mede o cateto oposto a esse ângulo?'];
+ if(o==1)return[`Triângulo retângulo com hipotenusa ${h} e um ângulo de 60°`,h/2,1,'Quanto mede o cateto adjacente a esse ângulo?'];
+ if(o==2)return[`Triângulo retângulo com um ângulo de 45° e cateto oposto ${h}`,h,1,'Quanto mede o cateto adjacente?'];
+ if(o==3){const a=R(30,80),b=R(30,70);return[`Um triângulo tem ângulos de ${a}° e ${b}°`,180-a-b,1,'Quanto mede o terceiro ângulo, em graus?']}
+ const n=R(5,10);return[`Polígono regular de ${n} lados`,(n-2)*180,1,'Qual é a soma dos ângulos internos, em graus?']}
+function cbas(){const a=R(10,60),b=R(2,9),o=R(0,3);
+ return[[`Lia tinha ${a} figurinhas e ganhou ${b}`,`Um ônibus tinha ${a} passageiros e ${b} desceram`,`${b} caixas com ${a} lápis cada`,`${a*b} balas divididas igualmente entre ${b} crianças`][o],[a+b,a-b,a*b,a][o],1,['Quantas ela tem agora?','Quantos passageiros ficaram?','Quantos lápis há no total?','Quantas balas cada criança recebe?'][o]]}
+function cpct(){const n=R(2,15)*20,p=P([10,20,25,50]);return[`Numa escola com ${n} alunos, ${p}% vão à excursão`,n*p/100,1,'Quantos alunos vão?']}
+function cfrac(){const d=P([3,4,5,8]),u=R(1,d-1),n=d*R(2,6);return[`Pedro comeu ${u}/${d} de ${n} fatias de pizza`,u*n/d,1,'Quantas fatias ele comeu?']}
+function cmmc(){const[p,q]=P(CO),g=R(2,6),a=g*p,b=g*q;
+ return R(0,1)?[`Dois sinais piscam a cada ${a} e ${b} segundos e acabaram de piscar juntos`,g*p*q,1,'Depois de quantos segundos piscam juntos de novo?']:[`Duas cordas de ${a} cm e ${b} cm serão cortadas em pedaços iguais, os maiores possíveis`,g,1,'Quantos cm tem cada pedaço?']}
+function cprop(){const a=R(2,6),p=R(2,5),b=R(7,15);return[`Uma receita para ${a} pessoas leva ${a*p} ovos`,b*p,1,`Quantos ovos para ${b} pessoas?`]}
+function cgeo(){const a=R(3,12),b=R(3,12),c=R(2,6),T=P([[3,4,5],[5,12,13],[8,15,17],[6,8,10]]),o=R(0,2);
+ if(o==0)return[`Um terreno retangular mede ${a} m por ${b} m`,2*(a+b),1,'Quantos metros de cerca para dar a volta?'];
+ if(o==1)return[`Uma caixa d’água mede ${a} m × ${b} m × ${c} m`,a*b*c,1,'Quantos m³ de água cabem?'];
+ return[`Uma escada de ${T[2]} m encosta numa parede, com a base a ${T[0]} m dela`,T[1],1,'Que altura da parede ela alcança, em m?']}
+function cprob(){const n=P([4,5,10,20,25]),r=R(1,n-1);return[`Numa sala há ${r} meninas e ${n-r} meninos`,r*100/n,1,'Sorteando um aluno, qual é a chance (%) de ser menina?']}
+function csist(){const s=R(2,9),t=R(2,9),w=R(0,1);let a,b,c,d;do{a=R(1,3);b=R(1,3);c=R(1,3);d=R(1,3)}while(a*d==b*c);
+ return[`${pl(a,'suco')} e ${pl(b,'salgado')} custam R$ ${a*s+b*t}; ${pl(c,'suco')} e ${pl(d,'salgado')} custam R$ ${c*s+d*t}`,w?t:s,1,w?'Quanto custa um salgado, em R$?':'Quanto custa um suco, em R$?']}
+function csimp(){const C=R(2,50)*100,i=R(1,10),t=R(2,12);return[`Carlos investiu R$ ${br(C)} a ${i}% ao mês, juros simples, por ${t} meses`,C*i*t/100,1,'Quanto ele ganhou de juros, em R$?']}
+function ccomp(){const[i,t,m]=P([[10,2,100],[10,3,1000],[20,2,100],[20,3,1000],[5,2,400],[50,2,200]]),C=m*R(1,m<=100?20:5);return[`Marta investiu R$ ${br(C)} a ${i}% ao mês, juros compostos, por ${t} meses`,Math.round(C*(1+i/100)**t),1,'Quanto ela terá no final, em R$?']}
+function cquad(){const x=R(2,12),k=R(1,6);return[`Um retângulo tem comprimento ${k} m maior que a largura e área de ${x*(x+k)} m²`,x,1,'Qual é a largura, em m?']}
+function cstat(){const q=stats(4);q[0]=q[0].replace('Dados:',P(['Notas de Ana:','Idades de um grupo:','Gols em cada jogo:','Preços (R$) na feira:']));return q}
+function cpa(){const a=R(2,6),r=R(1,3),n=R(6,12);return[`Um atleta corre ${a} km no 1º dia e ${r} km a mais a cada dia`,a+(n-1)*r,1,`Quantos km ele corre no ${n}º dia?`]}
+function cpg(){const a=R(1,5),n=R(3,7);return[`Uma cultura começa com ${a} bactérias e dobra a cada hora`,a*2**n,1,`Quantas bactérias há após ${n} horas?`]}
+function clog(){const e=R(3,9);return[`Uma cultura dobra a cada hora e foi de 1 para ${2**e} bactérias`,e,1,'Quantas horas se passaram?']}
+function ctrig(){const h=R(3,12)*2,o=R(0,2);
+ if(o==0)return[`Uma rampa de ${h} m forma 30° com o chão`,h/2,1,'Qual é a altura que ela atinge, em m?'];
+ if(o==1)return[`Um poste projeta sombra de ${h} m quando o sol está a 45° do chão`,h,1,'Qual é a altura do poste, em m?'];
+ return[`Uma escada de ${h} m forma 60° com o chão`,h/2,1,'A que distância da parede fica a base, em m?']}
+function cvel(){return vel()}
+;[cpct,cfrac,cmmc,cprop,cgeo,cprob,csist,csimp,ccomp,cquad,cstat,()=>P([cpa,cpg])(),clog,ctrig,cvel].forEach((c,k)=>TOP[k].push(c));
+const CL=[[cbas],[cbas,cfrac,cmmc],[cpct,cfrac,cmmc,cprop],[cpct,cquad,csimp,cstat,cgeo,cprop],[cpct,cquad,csimp,ccomp,cstat,cgeo,cprob,csist],[cpa,cpg,clog,ctrig,cvel,csist,ccomp,cquad,cgeo]];
 function extra(l){const t=[];if(l==1)t.push(frac,mmc);if(l==2)t.push(pct,frac,mmc,prop);if(l==3||l==4)t.push(pct,quad,simp,stats);if(l==3)t.push(prop,geo);if(l==4)t.push(comp,geo,prob,sist);return P(t)(l)}
 function gen(l){let a,b,c,d,e,x,o;
+ if(Math.random()<.2)return P(CL[l])(l);
  if(l==5)return P([pa,pg,logt,trig,vel,vel,sist,comp,quad,geo])(l);
  if(l>=1&&Math.random()<[0,.35,.5,.6,.6][l])return extra(l);
  if(l==0){o=R(0,3);
@@ -241,11 +286,11 @@ function gen(l){let a,b,c,d,e,x,o;
  if(o==4){a=P([10,20,25,50,75]);b=R(2,30)*20;return[`${a}% de ${b}`,a*b/100]}
  a=R(12,25);b=R(11,19);return[`${a} × ${b}`,a*b]}
 
-let lv=0,qs=[],i=0,ok=0,ts=[],TL=30,pend=0,tr=null,NT=false,locked=true,iv=0,end=0,again=()=>{};
-const show=id=>{if(id=='intro')renderList();['intro','game','res','tp','ths'].forEach(s=>$(s).classList.toggle('hidden',s!=id))};
+let lv=0,qs=[],i=0,ok=0,ts=[],TL=30,pend=0,tr=null,pk=0,NT=false,locked=true,iv=0,end=0,again=()=>{};
+const show=id=>{if(id=='intro')renderList();['intro','game','res','tp','ths','tt'].forEach(s=>$(s).classList.toggle('hidden',s!=id))};
 const say=t=>$('say').textContent=t;
 function mood(c){const o=document.querySelector('#game .owl');o.classList.remove('hop','shake');void o.offsetWidth;if(c)o.classList.add(c)}
-function startLevel(l,t,k){lv=l;tr=k==null?null:k;NT=$('nt').checked;TL=t||(tr==null?LV[l].t:90);qs=Array.from({length:tr==null?LV[l].n:10},()=>tr==null?gen(l):TOP[tr][1](4));i=0;ok=0;ts=[];show('game');say(tr==null?LV[l].m:'Treino: '+TOP[tr][0]);next()}
+function startLevel(l,t,k){lv=l;tr=k==null?null:k;NT=$('nt').checked||t<0;TL=t>0?t:(tr==null?LV[l].t:90);qs=Array.from({length:tr==null?LV[l].n:10},()=>tr==null?gen(l):Math.random()<.2?TOP[tr][2](4):TOP[tr][1](4));i=0;ok=0;ts=[];show('game');say(tr==null?LV[l].m:'Treino: '+TOP[tr][0]);next()}
 function next(){
  if(i>=qs.length)return finish();
  const[t,a,e,h]=qs[i],T=TL*1000;
@@ -281,13 +326,15 @@ function finish(){
  const o=document.querySelector('#res .owl');o.classList.remove('hop');void o.offsetWidth;if(pass)o.classList.add('hop')}
 $('start').onclick=()=>startLevel(0);
 $('nx').onclick=()=>go(lv+1);
-$('keep').onclick=()=>startLevel(lv,TL,tr);
+$('keep').onclick=()=>startLevel(lv,NT?-1:TL,tr);
 $('tp').onclick=e=>{const b=e.target.closest('[data-t]');if(b)startLevel(pend,+b.dataset.t)};
 $('tpb').onclick=()=>show('intro');
 $('trbtn').onclick=()=>show('ths');
 $('thb').onclick=()=>show('intro');
+$('tt').onclick=e=>{const b=e.target.closest('[data-u]');if(b)startLevel(0,+b.dataset.u,pk)};
+$('ttb').onclick=()=>show('ths');
 $('tgrid').innerHTML=TOP.map((t,k)=>`<button data-k="${k}">${t[0]}</button>`).join('');
-$('tgrid').onclick=e=>{const b=e.target.closest('button');if(b)startLevel(0,null,+b.dataset.k)};
+$('tgrid').onclick=e=>{const b=e.target.closest('button');if(b){pk=+b.dataset.k;if($('nt').checked)startLevel(0,-1,pk);else{$('ttt').textContent=TOP[pk][0];show('tt')}}};
 $('home').onclick=()=>show('intro');
 $('quit').onclick=()=>{clearInterval(iv);locked=true;show('intro')};
 $('go').onclick=submit;
